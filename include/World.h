@@ -24,11 +24,6 @@ class World {
     glm::vec3 playerPos, oldPos;
     std::vector<glm::vec4> frustumPlanes;
 
-    void setIsRunning(bool& running)
-    {
-      this->running = running;
-    }
-
     void createChunks()
     {
         for (int z = 0; z < startingChunkSize; z++)
@@ -95,7 +90,7 @@ class World {
 
       // here if a boundry is crossed we want to push the job onto a queue
       if (oldChunkX != newChunkX || oldChunkZ != newChunkZ) {
-        chunkJobs.push(ChunkJob{newChunkX, newChunkZ});
+        updateVisibleChunks();
       }
     }
 
@@ -104,25 +99,10 @@ class World {
       this->frustumPlanes = frustumPlanes;
     }
 
-    void workerThreadMain() {
-      while (running) {
-        ChunkJob job;
-        chunkJobs.waitPop(job);   // blocks until a job is available
-        // 1) Create the chunk
-        auto chunk = std::make_unique<Chunk>(job.cx, job.cz);
-        // 2) Heavy work off the main thread:
-        chunk->generate();
-        chunk->buildMesh();   // fills CPU-side verts/indices, but does NOT glBufferData()
-        // 3) Pass the completed chunk back to main:
-        readyChunks.push(std::move(chunk));
-      }
-    }
-
     void manageChunks(const glm::vec3& newPos, Shader& shader, const std::vector<glm::vec4>& frustumPlanes)
     {
-      updatePlayerPos(newPos);
-
       updateFrustumPlanes(frustumPlanes);
+      updatePlayerPos(newPos);
       updateVisibleChunks();
       drawVisibleChunks(shader);
     }
@@ -136,6 +116,4 @@ class World {
 
     // stores the chunk coordinate keys that are currently visible
     std::vector<Chunk*> visibleChunks;
-    ThreadSafeQueue<ChunkJob> chunkJobs;
-    ThreadSafeQueue<std::unique_ptr<Chunk>> readyChunks;
 };

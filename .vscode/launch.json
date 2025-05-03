@@ -1,0 +1,18 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run voxel engine",
+      "type": "cppdbg", // if you use the Microsoft C++ extension
+      "request": "launch",
+      "program": "${workspaceFolder}/bin/src",
+      "args": [], // e.g. ["-someFlag", "value"]
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}", // <-- ensures shaders/ and assets/ are found
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "lldb", // on macOS use "lldb"; on Linux use "gdb"
+      "preLaunchTask": "Build voxel engine"
+    }
+  ]
+}

@@ -16,7 +16,7 @@ public:
     static constexpr int HEIGHT = 256;
     static constexpr int DEPTH  = 16;
 
-    static constexpr int surface = 64;
+    static constexpr int MAX_SURFACE = 64;
 
     const siv::PerlinNoise::seed_type seed = 123456u;
 
@@ -52,9 +52,7 @@ public:
         const siv::PerlinNoise perlin{ seed };
         double freq = 0.005;
         double pers = 0.6;
-        int maxHeight = surface;
-
-
+        
         for (int x = 0; x < WIDTH; x++)
         {
             for (int z = 0; z < DEPTH; z++)
@@ -63,8 +61,7 @@ public:
                 int worldZ = chunkZ * DEPTH + z;
 
                 double height = perlin.octave2D_01((worldX * freq), (worldZ * freq), 5, pers);
-                int surfaceY = int(height * maxHeight);
-
+                int surfaceY = static_cast<int>( height * MAX_SURFACE);
                 for (int y = 0; y < HEIGHT; y++)
                 {
                     if (y == surfaceY)
@@ -152,6 +149,7 @@ public:
 
                         if (isBorder || neighborIsAir)
                         {
+                            // try to regen perlin noise for border faces to see if it improves performance
                             if (d == 0 || d == 1 || d == 4 || d == 5)
                             {
                                 glm::vec2 textcoord = atlasOffset.sides;

@@ -1,0 +1,41 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build voxel engine",
+      "type": "cppbuild",
+      "command": "/usr/bin/clang++",
+      "args": [
+        "-fcolor-diagnostics",
+        "-fansi-escape-codes",
+        "-I",
+        ".",
+        "libs/glad/glad.c",
+        "${file}", // e.g. main.cpp
+        "-std=c++20",
+        "-g",
+        "-o",
+        "bin/src",
+        "-L",
+        "libs/glfw",
+        "-lglfw3",
+        "-framework",
+        "Cocoa",
+        "-framework",
+        "OpenGL",
+        "-framework",
+        "IOKit",
+        "-framework",
+        "CoreVideo"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": ["$gcc"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}
