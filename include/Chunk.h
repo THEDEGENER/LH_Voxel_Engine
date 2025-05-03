@@ -7,7 +7,8 @@
 #include "Mesh.h"          
 #include "VoxelTypes.h"
 #include <libs/glm/gtc/noise.hpp> 
-#include "include/PerlinNoise.hpp"    
+#include "include/PerlinNoise.hpp"  
+#include "Noise.h"  
 
 class Chunk {
 public:
@@ -26,11 +27,10 @@ public:
     int chunkX;
     int chunkZ;
 
-    Chunk(int chunkX, int chunkZ)
-      : chunkX(chunkX), chunkZ(chunkZ), dirty(true),
-        box{ glm::vec3(chunkX * float(WIDTH), 0.0f, chunkZ * float(DEPTH)),
-             glm::vec3(chunkX * float(WIDTH) + float(WIDTH),
-                float(HEIGHT), chunkZ * float(DEPTH) + float(DEPTH)) }
+    Chunk(int chunkX, int chunkZ) : chunkX(chunkX), chunkZ(chunkZ), dirty(true),
+        box{ glm::vec3(chunkX * float(WIDTH), 0.0f, chunkZ * float(DEPTH)), 
+             glm::vec3(chunkX * float(WIDTH) + float(WIDTH), 
+             float(HEIGHT), chunkZ * float(DEPTH) + float(DEPTH)) }
     {
       // initialize everything to Air
       blocks.fill(BlockType::Air);
@@ -49,10 +49,6 @@ public:
 
     void generate()
     {
-        const siv::PerlinNoise perlin{ seed };
-        double freq = 0.005;
-        double pers = 0.6;
-        
         for (int x = 0; x < WIDTH; x++)
         {
             for (int z = 0; z < DEPTH; z++)
@@ -60,7 +56,7 @@ public:
                 int worldX = chunkX * WIDTH + x;
                 int worldZ = chunkZ * DEPTH + z;
 
-                double height = perlin.octave2D_01((worldX * freq), (worldZ * freq), 5, pers);
+                double height = noise.getWorldNoise(worldX, worldZ);
                 int surfaceY = static_cast<int>( height * MAX_SURFACE);
                 for (int y = 0; y < HEIGHT; y++)
                 {
@@ -147,7 +143,7 @@ public:
                         bool isBorder = nx<0 || nx>=WIDTH || ny<0 || ny>=HEIGHT || nz<0 || nz>=DEPTH;
                         bool neighborIsAir = !isBorder && getBlock(nx,ny,nz) == BlockType::Air;
 
-                        if (isBorder || neighborIsAir)
+                        if (neighborIsAir)
                         {
                             // try to regen perlin noise for border faces to see if it improves performance
                             if (d == 0 || d == 1 || d == 4 || d == 5)
@@ -165,6 +161,31 @@ public:
                                 glm::vec2 textcoord = atlasOffset.bottom;
                                 addFaceQuad(verts, idx, x, y, z, d, textcoord);
 
+                            }
+                        } else if (isBorder) {
+                            /* 
+                                I believe this to be somewhat a nieve appraoch because will it does improve performance 
+                                given that there are less faces to render there is still the overhead of recomputing the
+                                noise for all borders and the approach is messy. I know of other methods to solve this but
+                                this was the easiest for me in a quick pinch and i hope to improve it.    
+                            */
+                            int worldX = chunkX * WIDTH + nx;
+                            int worldZ = chunkZ * DEPTH + nz;
+                            auto neighborHeight = noise.getWorldNoise(worldX, worldZ);
+                            int neighborSurfaceY = static_cast<int>(neighborHeight * MAX_SURFACE);
+                            bool neighborIsAirBorder = (y > neighborSurfaceY);
+
+                            if (neighborIsAirBorder) {
+                                if (d == 0 || d == 1 || d == 4 || d == 5) {
+                                    glm::vec2 textcoord = atlasOffset.sides;
+                                    addFaceQuad(verts, idx, x, y, z, d, textcoord);
+                                } else if (d == 2) {
+                                    glm::vec2 textcoord = atlasOffset.top;
+                                    addFaceQuad(verts, idx, x, y, z, d, textcoord);
+                                } else if (d == 3) {
+                                    glm::vec2 textcoord = atlasOffset.bottom;
+                                    addFaceQuad(verts, idx, x, y, z, d, textcoord);
+                                }
                             }
                         }
                     }
@@ -258,4 +279,5 @@ private:
     bool dirty;          
     std::array<BlockType, WIDTH*HEIGHT*DEPTH> blocks;
     Mesh mesh;
+    Noise noise{ seed };
 };
