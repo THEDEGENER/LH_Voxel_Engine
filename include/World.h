@@ -4,6 +4,7 @@
 #include <memory>
 #include <utility>
 #include "Chunk.h"
+#include "SafeQueue.hpp"
 #include "include/shader_m.h"
 
 struct PairHash {
@@ -107,6 +108,11 @@ class World {
       drawVisibleChunks(shader);
     }
 
+    void workerThreadPool(int& numThreads)
+    {
+      
+    }
+
     private:
 
     bool running;
@@ -116,4 +122,6 @@ class World {
 
     // stores the chunk coordinate keys that are currently visible
     std::vector<Chunk*> visibleChunks;
+    SafeQueue<Chunk*>      generateQueue;
+    SafeQueue<Chunk*>      uploadQueue;
 };

@@ -75,7 +75,7 @@ public:
         }
     }
 
-    void addFaceQuad(std::vector<Vertex>& verts, std::vector<uint32_t>& idx, int x, int y, int z, int dir, glm::vec2 atlasOffset)
+    void addFaceQuad(std::vector<Vertex>& verts, std::vector<uint32_t>& idx, int x, int y, int z, int dir, glm::vec2& atlasOffset)
     {
         // populate vectors then they are passed to mesh in the build function
         float atlasWidth = 1024.0f;   // actual pixel width of atlas
@@ -192,7 +192,8 @@ public:
                 }
             }
         }
-        mesh.setData(verts, idx); 
+        // removed for multithreading
+        // mesh.setData(verts, idx); 
     }
 
     bool IsAabbVisible(const std::vector<glm::vec4>& frustumPlanes) {

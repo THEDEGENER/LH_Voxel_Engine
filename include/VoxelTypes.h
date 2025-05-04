@@ -2,9 +2,11 @@
 
 #pragma once
 
+
 #include <libs/glad/glad.h>
 #include <libs/glm/glm.hpp>
 #include <libs/glm/gtc/matrix_transform.hpp>
+#include <libs/glm/gtc/type_precision.hpp>
 #include <unordered_map>
 #include <string>
 #include <vector>
@@ -88,7 +90,7 @@ struct AABB {
 };
 
 struct Vertex {
-    glm::vec3 Position;
+    glm::vec3 Position; // half-precision 3-component float vector
     glm::vec3 Normal;
     glm::vec2 TexCoords;
 };
