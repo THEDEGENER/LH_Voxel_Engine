@@ -2,10 +2,12 @@
 
 #include <unordered_map>
 #include <memory>
+#include <thread>
 #include <utility>
 #include "Chunk.h"
 #include "SafeQueue.hpp"
 #include "include/shader_m.h"
+#include "VoxelTypes.h"
 
 struct PairHash {
     size_t operator()(const std::pair<int,int>& p) const noexcept {
@@ -15,28 +17,37 @@ struct PairHash {
     }
   };
 
+enum class JobType { GenerateAndBuild, BuildOnly };
+struct ChunkJob {
+  Chunk*    chunk;
+  JobType   type;
+};
+
 class World {
     public:
     int cx;
     int cz;
 
+
     static constexpr int startingChunkSize = 6;
 
     glm::vec3 playerPos, oldPos;
-    std::vector<glm::vec4> frustumPlanes;
+    std::vector<glm::vec4> frustumPlanes, oldFrustum;
 
-    void createChunks()
+    World() 
     {
-        for (int z = 0; z < startingChunkSize; z++)
-        {
-          for (int x = 0; x < startingChunkSize; x++)
-          {
-            auto key = std::make_pair(x, z);
-            auto newChunk = std::make_unique<Chunk>(x, z);
-            newChunk->generate();
-            chunks.emplace(key, std::move(newChunk));
-          }
-        }
+      atlasText = Loader::loadTexture("assets/textures/block_atlas.png");
+      startWorldThreads();
+    }
+
+    ~World()
+    {
+      generateQueue.close();
+      uploadQueue.close();
+      for(auto& t : threads)
+      {
+        if (t.joinable()) t.join();
+      }
     }
 
     void updateVisibleChunks()
@@ -58,8 +69,18 @@ class World {
           auto it = chunks.find(key);
           if (it == chunks.end()) {
             auto newChunk = std::make_unique<Chunk>(cx, cz);
-            newChunk->generate();
+            Chunk* rawChunkPtr = newChunk.get();
             it = chunks.emplace(key, std::move(newChunk)).first;
+            // upload new chunk to the queue for a thread to take
+            generateQueue.push(ChunkJob{ rawChunkPtr, JobType::GenerateAndBuild });
+            rawChunkPtr->scheduled = true;
+          } else {
+            Chunk* exisitngChunk = it->second.get();
+            if (exisitngChunk->dirty.load(std::memory_order_relaxed) && !exisitngChunk->scheduled)
+            {
+              generateQueue.push(ChunkJob{ exisitngChunk, JobType::BuildOnly });
+              exisitngChunk->scheduled = true;
+            }
           }
           
           Chunk* chunkPtr = it->second.get();
@@ -72,56 +93,110 @@ class World {
       }
     }
 
-    void drawVisibleChunks(Shader& shader)
+    void uploadFinishedChunksToGPU()
     {
-        for (auto& chunk : visibleChunks) {
-            chunk->draw(shader);
-          }
+      Chunk* finishedChunk = nullptr;
+      while(uploadQueue.tryPop(finishedChunk))
+      {
+        finishedChunk->setData();
+      }
     }
 
-    void updatePlayerPos(const glm::vec3& newPos)
+    void drawVisibleChunks(Shader& shader)
+    {
+      std::cout << "numChunks" << chunks.size() << std::endl;
+      for (auto& chunk : visibleChunks) 
+      {
+        chunk->draw(shader, atlasText);
+      }
+    }
+
+    void updatePlayerPos(const glm::vec3& newPos, const std::vector<glm::vec4>& newFrustumPlanes)
     {
       oldPos = playerPos;
       this->playerPos = newPos;
+
+      if (newFrustumPlanes != frustumPlanes)
+      {
+        frustumPlanes = newFrustumPlanes;
+        frustumDirty = true;
+      }
 
       int oldChunkX = int(floor(oldPos.x / Chunk::WIDTH));
       int oldChunkZ = int(floor(oldPos.z / Chunk::DEPTH));
       int newChunkX = int(floor(playerPos.x / Chunk::WIDTH));
       int newChunkZ = int(floor(playerPos.z / Chunk::DEPTH));
 
-      // here if a boundry is crossed we want to push the job onto a queue
-      if (oldChunkX != newChunkX || oldChunkZ != newChunkZ) {
+      bool moved = (oldChunkX != newChunkX || oldChunkZ != newChunkZ);
+      if(moved || frustumDirty)
+      {
         updateVisibleChunks();
+        frustumDirty = false;
+      }
+
+    }
+
+    void workerThreadPool()
+    {
+      while(true)
+      {
+        ChunkJob job = generateQueue.pop();
+        if (job.chunk == nullptr)
+        {
+          break;
+        }
+
+        Chunk* c = job.chunk;
+
+        c->dirty = false;
+
+        if (job.type == JobType::GenerateAndBuild)
+        {
+          std::cout << "thread: " << std::this_thread::get_id() << " is starting a gen task" << std::endl;
+          c->generate();
+        }
+        std::cout << "thread: " << std::this_thread::get_id() << " is starting a build task" << std::endl;
+        c->buildMesh();
+        c->scheduled = false;
+        uploadQueue.push(c);
       }
     }
 
-    void updateFrustumPlanes(const std::vector<glm::vec4>& frustumPlanes)
+    void startWorldThreads()
     {
-      this->frustumPlanes = frustumPlanes;
+      auto hc = 1;
+      unsigned int threadCount = hc > 0 ? hc : 1;
+      std::cout << "threadCount: " << threadCount << std::endl;
+      for (unsigned int i = 0; i < threadCount; i++)
+      {
+        // this could also be a lambda function that calls this->workerThreadPool
+        // which seems more readable but this is how i read about it
+        threads.emplace_back(&World::workerThreadPool, this);
+      }
     }
 
     void manageChunks(const glm::vec3& newPos, Shader& shader, const std::vector<glm::vec4>& frustumPlanes)
     {
-      updateFrustumPlanes(frustumPlanes);
-      updatePlayerPos(newPos);
-      updateVisibleChunks();
+      updatePlayerPos(newPos, frustumPlanes);
+      uploadFinishedChunksToGPU();
       drawVisibleChunks(shader);
-    }
-
-    void workerThreadPool(int& numThreads)
-    {
-      
     }
 
     private:
 
-    bool running;
+    // atomic is a type that multi threads can operate on but only one at 
+    // a time, was introduced to better synchronise threads with its addition in 
+    // the standard library
+    bool frustumDirty = false;
     std::unordered_map<std::pair<int,int>,
                      std::unique_ptr<Chunk>,
                      PairHash> chunks;
 
     // stores the chunk coordinate keys that are currently visible
     std::vector<Chunk*> visibleChunks;
-    SafeQueue<Chunk*>      generateQueue;
-    SafeQueue<Chunk*>      uploadQueue;
+    SafeQueue<ChunkJob> generateQueue;
+    SafeQueue<Chunk*> uploadQueue;
+    std::vector<std::thread> threads;
+
+    GLuint atlasText;
 };

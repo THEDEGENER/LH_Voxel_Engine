@@ -15,11 +15,6 @@ public:
 
     Mesh() { 
         setupMesh(); 
-        atlasTex = Loader::loadTexture("assets/textures/block_atlas.png");
-        if (atlasTex == 0)
-        {
-            std::cout << "texture failed" << std::endl;
-        }
     }
     ~Mesh() {
         if (VAO) {
@@ -55,10 +50,10 @@ public:
         
     }
 
-    void draw(Shader& shader)
+    void draw(Shader& shader, GLuint& atlasText)
     {
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, atlasTex);
+        glBindTexture(GL_TEXTURE_2D, atlasText);
         shader.setInt("texture1", 0);
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr);
@@ -69,7 +64,7 @@ private:
     // GPU handles
     GLuint VAO = 0, VBO = 0, EBO = 0;
     GLsizei indexCount = 0;
-    GLuint atlasTex = 0;
+    GLuint atlasText;
 
     // CPU-side cache (optional)
     std::vector<Vertex>   vertices;

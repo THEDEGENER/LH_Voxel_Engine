@@ -50,6 +50,9 @@
     "sstream": "cpp",
     "algorithm": "cpp",
     "memory": "cpp",
-    "fstream": "cpp"
+    "fstream": "cpp",
+    "charconv": "cpp",
+    "condition_variable": "cpp",
+    "forward_list": "cpp"
   }
 }

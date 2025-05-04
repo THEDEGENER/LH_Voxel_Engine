@@ -26,11 +26,15 @@ public:
 
     int chunkX;
     int chunkZ;
+    std::atomic<bool> dirty;
+    std::atomic<bool> scheduled;
 
-    Chunk(int chunkX, int chunkZ) : chunkX(chunkX), chunkZ(chunkZ), dirty(true),
-        box{ glm::vec3(chunkX * float(WIDTH), 0.0f, chunkZ * float(DEPTH)), 
-             glm::vec3(chunkX * float(WIDTH) + float(WIDTH), 
-             float(HEIGHT), chunkZ * float(DEPTH) + float(DEPTH)) }
+    Chunk(int chunkX, int chunkZ) : chunkX(chunkX), chunkZ(chunkZ), dirty(true), scheduled(false),
+        box{
+            glm::vec3(chunkX * float(WIDTH), 0.0f, chunkZ * float(DEPTH)), 
+            glm::vec3(chunkX * float(WIDTH) + float(WIDTH), 
+            float(HEIGHT), chunkZ * float(DEPTH) + float(DEPTH))
+        } 
     {
       // initialize everything to Air
       blocks.fill(BlockType::Air);
@@ -39,7 +43,6 @@ public:
     // set a block and mark dirty so we regenerate the mesh next frame
     void setBlock(int x, int y, int z, BlockType type) {
       blocks[index(x,y,z)] = type;
-      dirty = true;
     }
 
     // read without marking dirty
@@ -196,6 +199,11 @@ public:
         // mesh.setData(verts, idx); 
     }
 
+    void setData()
+    {
+        mesh.setData(verts, idx);
+    }
+
     bool IsAabbVisible(const std::vector<glm::vec4>& frustumPlanes) {
 
         const glm::vec3& vmin = this->box.vmin;
@@ -222,15 +230,10 @@ public:
     }
  
     // just draws the mesh (one glDrawElements call under the hood)
-    void draw(Shader& shader) {
-        if (dirty) {
-            buildMesh();
-            dirty = false;
-        }
-
+    void draw(Shader& shader, GLuint& atlasText) {
         glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(chunkX * WIDTH, 0.0f, chunkZ * DEPTH));
         shader.setMat4("model", model);
-        mesh.draw(shader);
+        mesh.draw(shader, atlasText);
     }
 
     std::vector<glm::vec3> GetAABBVertices(const AABB& box) {
@@ -276,8 +279,7 @@ private:
       return x + WIDTH * (y + HEIGHT * z);
     }
 
-    AABB box;
-    bool dirty;          
+    AABB box;          
     std::array<BlockType, WIDTH*HEIGHT*DEPTH> blocks;
     Mesh mesh;
     Noise noise{ seed };

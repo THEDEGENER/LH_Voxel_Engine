@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <string>
 #include <vector>
+#include "Chunk.h"
 using namespace std;
 
 // type is explicitly set the 8bit int taking less space for 1000s of blocks
@@ -94,6 +95,7 @@ struct Vertex {
     glm::vec3 Normal;
     glm::vec2 TexCoords;
 };
+
 
 
 
