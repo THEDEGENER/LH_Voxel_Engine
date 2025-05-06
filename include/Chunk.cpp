@@ -1,13 +1,9 @@
-// Chunk.h
-
-#pragma once
+#include "Chunk.hpp"
 #include <array>
 #include <vector>
 #include <memory>
 #include "Mesh.h"          
-#include "VoxelTypes.h"
-#include <libs/glm/gtc/noise.hpp> 
-#include "include/PerlinNoise.hpp"  
+#include "VoxelTypes.hpp"   
 #include "Noise.h"  
 
 class Chunk {

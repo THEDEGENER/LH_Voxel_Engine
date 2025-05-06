@@ -8,7 +8,6 @@
 #include <libs/glm/gtc/matrix_transform.hpp>
 #include <libs/glm/gtc/type_precision.hpp>
 #include <unordered_map>
-#include <string>
 #include <vector>
 #include "Chunk.h"
 using namespace std;
@@ -94,6 +93,20 @@ struct Vertex {
     glm::vec3 Position; // half-precision 3-component float vector
     glm::vec3 Normal;
     glm::vec2 TexCoords;
+};
+
+struct PairHash {
+    size_t operator()(const std::pair<int,int>& p) const noexcept {
+      uint64_t key = (uint64_t(uint32_t(p.first)) << 32)
+                   |  uint32_t(p.second);
+      return std::hash<uint64_t>()(key);
+    }
+  };
+
+enum class JobType { GenerateAndBuild, BuildOnly };
+struct ChunkJob {
+  Chunk*    chunk;
+  JobType   type;
 };
 
 

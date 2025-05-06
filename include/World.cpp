@@ -1,35 +1,14 @@
-#pragma once
-
 #include <unordered_map>
 #include <memory>
 #include <thread>
 #include <utility>
-#include "Chunk.h"
+#include "World.hpp"
 #include "SafeQueue.hpp"
-#include "include/shader_m.h"
-#include "VoxelTypes.h"
-
-struct PairHash {
-    size_t operator()(const std::pair<int,int>& p) const noexcept {
-      uint64_t key = (uint64_t(uint32_t(p.first)) << 32)
-                   |  uint32_t(p.second);
-      return std::hash<uint64_t>()(key);
-    }
-  };
-
-enum class JobType { GenerateAndBuild, BuildOnly };
-struct ChunkJob {
-  Chunk*    chunk;
-  JobType   type;
-};
+#include "shader_m.h"
+#include "VoxelTypes.hpp"
 
 class World {
     public:
-    int cx;
-    int cz;
-
-
-    static constexpr int startingChunkSize = 6;
 
     glm::vec3 playerPos, oldPos;
     std::vector<glm::vec4> frustumPlanes, oldFrustum;
@@ -46,7 +25,7 @@ class World {
       uploadQueue.close();
       for(auto& t : threads)
       {
-        if (t.joinable()) t.join();
+        t.join();
       }
     }
 
@@ -59,8 +38,9 @@ class World {
       int playerChunkZ = int(floor(playerPos.z / Chunk::DEPTH));
     
       // loop a 3×3 (or NxN) area around that chunk
-      for (int dz = -3; dz <= 3; ++dz) {
-        for (int dx = -3; dx <= 3; ++dx) {
+      static constexpr int R = 3;
+      for (int dz = -R; dz <= R; ++dz) {
+        for (int dx = -R; dx <= R; ++dx) {
           int cx = playerChunkX + dx;
           int cz = playerChunkZ + dz;
           auto key = std::make_pair(cx, cz);
@@ -76,7 +56,7 @@ class World {
             rawChunkPtr->scheduled = true;
           } else {
             Chunk* exisitngChunk = it->second.get();
-            if (exisitngChunk->dirty.load(std::memory_order_relaxed) && !exisitngChunk->scheduled)
+            if (exisitngChunk->dirty.load(std::memory_order_relaxed) && !exisitngChunk->scheduled.load(std::memory_order_relaxed))
             {
               generateQueue.push(ChunkJob{ exisitngChunk, JobType::BuildOnly });
               exisitngChunk->scheduled = true;
@@ -104,7 +84,7 @@ class World {
 
     void drawVisibleChunks(Shader& shader)
     {
-      std::cout << "numChunks" << chunks.size() << std::endl;
+      std::cout << "numChunks " << visibleChunks.size() << std::endl;
       for (auto& chunk : visibleChunks) 
       {
         chunk->draw(shader, atlasText);

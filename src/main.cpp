@@ -10,7 +10,7 @@
 #include "include/stb_image.h"
 #include "include/shader_m.h"
 #include <include/camera.h>
-#include "include/World.h"
+#include "include/World.hpp"
 #include <scripts/Loader.h>
 #include <include/SkyBox.h>
 
