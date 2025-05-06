@@ -1,7 +1,4 @@
-// VoxelTypes.h
-
 #pragma once
-
 
 #include <libs/glad/glad.h>
 #include <libs/glm/glm.hpp>
@@ -9,8 +6,10 @@
 #include <libs/glm/gtc/type_precision.hpp>
 #include <unordered_map>
 #include <vector>
-#include "Chunk.h"
+
 using namespace std;
+
+class Chunk;
 
 // type is explicitly set the 8bit int taking less space for 1000s of blocks
 enum class BlockType : uint8_t { Air, Dirt, Grass, Stone };
@@ -105,7 +104,7 @@ struct PairHash {
 
 enum class JobType { GenerateAndBuild, BuildOnly };
 struct ChunkJob {
-  Chunk*    chunk;
+  Chunk*  chunk;
   JobType   type;
 };
 

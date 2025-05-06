@@ -2,7 +2,9 @@
 
 #include <array>
 #include <vector>
-#include "VoxelTypes.hpp"   
+#include "shader_m.h"
+#include "VoxelTypes.hpp"
+#include "Mesh.h"   
 #include "Noise.h"
 
 
@@ -10,12 +12,7 @@
 class Chunk
 {
     public:
-    Chunk(int chunkX, int chunkZ) : chunkX(chunkX), chunkZ(chunkZ), dirty(true), scheduled(false),
-        box{
-            glm::vec3(chunkX * float(WIDTH), 0.0f, chunkZ * float(DEPTH)), 
-            glm::vec3(chunkX * float(WIDTH) + float(WIDTH), 
-            float(HEIGHT), chunkZ * float(DEPTH) + float(DEPTH))
-        };
+    Chunk(int chunkX, int chunkZ);
 
     int chunkX;
     int chunkZ;
@@ -31,13 +28,14 @@ class Chunk
 
     void generate();
     void buildMesh();
+    void draw(Shader& shader, GLuint& atlasText);
+    void setData();
+
+    bool IsAabbVisible(const std::vector<glm::vec4>& frustumPlanes);
+    std::vector<glm::vec3> GetAABBVertices(const AABB& box);
 
     private:
-    void setData();
-    void draw(Shader& shader, GLuint& atlasText);
-    std::vector<glm::vec3> GetAABBVertices(const AABB& box);
     inline int index(int x, int y, int z) const;
-    bool IsAabbVisible(const std::vector<glm::vec4>& frustumPlanes);
     void addFaceQuad(std::vector<Vertex>& verts, std::vector<uint32_t>& idx, int x, int y, int z, int dir, glm::vec2& atlasOffset);
     BlockType getBlock(int x, int y, int z) const;
     void setBlock(int x, int y, int z, BlockType type);
@@ -51,4 +49,4 @@ class Chunk
     std::array<BlockType, WIDTH*HEIGHT*DEPTH> blocks;
     Mesh mesh;
     Noise noise{ seed };
-}
+};

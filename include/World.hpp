@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <memory>
 #include <thread>
-#include "VoxelTypes.hpp"       // for BlockType, etc.
+#include "include/VoxelTypes.hpp"       // for BlockType, etc.
 #include "SafeQueue.hpp"        // for SafeQueue<ChunkJob>
 #include "shader_m.h"           // for Shader
 #include "Chunk.hpp"
@@ -36,7 +36,7 @@ class World
     // Utility:
 
     // Data:
-    glm::vec3 playerPos;
+    glm::vec3 playerPos, oldPos;
     bool frustumDirty = false;
     std::vector<glm::vec4> frustumPlanes;
 
@@ -48,4 +48,4 @@ class World
     std::vector<std::thread> threads;
 
     GLuint atlasText;
-}
+};

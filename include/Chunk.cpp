@@ -4,10 +4,10 @@
 #include <memory>
 #include "Mesh.h"          
 #include "VoxelTypes.hpp"   
-#include "Noise.h"  
+ 
 
-class Chunk {
-public:
+
+
     // classic Minecraft chunk size
     static constexpr int WIDTH  = 16;
     static constexpr int HEIGHT = 256;
@@ -15,17 +15,7 @@ public:
 
     static constexpr int MAX_SURFACE = 64;
 
-    const siv::PerlinNoise::seed_type seed = 123456u;
-
-    std::vector<Vertex> verts;
-    std::vector<uint32_t> idx;
-
-    int chunkX;
-    int chunkZ;
-    std::atomic<bool> dirty;
-    std::atomic<bool> scheduled;
-
-    Chunk(int chunkX, int chunkZ) : chunkX(chunkX), chunkZ(chunkZ), dirty(true), scheduled(false),
+    Chunk::Chunk(int chunkX, int chunkZ) : chunkX(chunkX), chunkZ(chunkZ), dirty(true), scheduled(false),
         box{
             glm::vec3(chunkX * float(WIDTH), 0.0f, chunkZ * float(DEPTH)), 
             glm::vec3(chunkX * float(WIDTH) + float(WIDTH), 
@@ -37,16 +27,16 @@ public:
     }
 
     // set a block and mark dirty so we regenerate the mesh next frame
-    void setBlock(int x, int y, int z, BlockType type) {
+    void Chunk::setBlock(int x, int y, int z, BlockType type) {
       blocks[index(x,y,z)] = type;
     }
 
     // read without marking dirty
-    BlockType getBlock(int x, int y, int z) const {
+    BlockType Chunk::getBlock(int x, int y, int z) const {
       return blocks[index(x,y,z)];
     }
 
-    void generate()
+    void Chunk::generate()
     {
         for (int x = 0; x < WIDTH; x++)
         {
@@ -74,7 +64,7 @@ public:
         }
     }
 
-    void addFaceQuad(std::vector<Vertex>& verts, std::vector<uint32_t>& idx, int x, int y, int z, int dir, glm::vec2& atlasOffset)
+    void Chunk::addFaceQuad(std::vector<Vertex>& verts, std::vector<uint32_t>& idx, int x, int y, int z, int dir, glm::vec2& atlasOffset)
     {
         // populate vectors then they are passed to mesh in the build function
         float atlasWidth = 1024.0f;   // actual pixel width of atlas
@@ -115,7 +105,7 @@ public:
         
     }
 
-    void buildMesh() 
+    void Chunk::buildMesh() 
     {
         verts.clear();
         idx.clear();
@@ -195,12 +185,12 @@ public:
         // mesh.setData(verts, idx); 
     }
 
-    void setData()
+    void Chunk::setData()
     {
         mesh.setData(verts, idx);
     }
 
-    bool IsAabbVisible(const std::vector<glm::vec4>& frustumPlanes) {
+    bool Chunk::IsAabbVisible(const std::vector<glm::vec4>& frustumPlanes) {
 
         const glm::vec3& vmin = this->box.vmin;
         const glm::vec3& vmax = this->box.vmax;
@@ -226,13 +216,13 @@ public:
     }
  
     // just draws the mesh (one glDrawElements call under the hood)
-    void draw(Shader& shader, GLuint& atlasText) {
+    void Chunk::draw(Shader& shader, GLuint& atlasText) {
         glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(chunkX * WIDTH, 0.0f, chunkZ * DEPTH));
         shader.setMat4("model", model);
         mesh.draw(shader, atlasText);
     }
 
-    std::vector<glm::vec3> GetAABBVertices(const AABB& box) {
+    std::vector<glm::vec3> Chunk::GetAABBVertices(const AABB& box) {
         const glm::vec3& vmin = box.vmin;
         const glm::vec3& vmax = box.vmax;
     
@@ -269,14 +259,9 @@ public:
         return vertices;
     }
 
-private:
+
     // simple 1D indexing into a 3D array
-    inline int index(int x, int y, int z) const {
+    inline int Chunk::index(int x, int y, int z) const {
       return x + WIDTH * (y + HEIGHT * z);
     }
 
-    AABB box;          
-    std::array<BlockType, WIDTH*HEIGHT*DEPTH> blocks;
-    Mesh mesh;
-    Noise noise{ seed };
-};

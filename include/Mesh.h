@@ -4,10 +4,8 @@
 #include <libs/glad/glad.h>
 #include <libs/glm/glm.hpp>
 #include <libs/glm/gtc/matrix_transform.hpp>
-#include "include/shader_m.h"
 #include "scripts/Loader.h"
-#include "include/Atlas.h"
-#include "VoxelTypes.h"
+#include "VoxelTypes.hpp"
 #include <vector>
 
 class Mesh {

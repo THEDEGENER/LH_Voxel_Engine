@@ -3,6 +3,7 @@
 
 #include <string>
 #include <filesystem>
+#include "include/stb_image.h"
 
 class Loader {
     public:

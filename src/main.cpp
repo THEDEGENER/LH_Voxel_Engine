@@ -7,12 +7,11 @@
 #include <random>
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "include/stb_image.h"
 #include "include/shader_m.h"
 #include <include/camera.h>
 #include "include/World.hpp"
 #include <scripts/Loader.h>
-#include <include/SkyBox.h>
+
 
 #include "libs/glad/glad.h"           
 #include "libs/glfw/glfw3.h"
