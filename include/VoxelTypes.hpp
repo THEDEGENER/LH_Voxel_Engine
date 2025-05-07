@@ -1,15 +1,16 @@
+// VoxelTypes.h
+
 #pragma once
+
 
 #include <libs/glad/glad.h>
 #include <libs/glm/glm.hpp>
 #include <libs/glm/gtc/matrix_transform.hpp>
-#include <libs/glm/gtc/type_precision.hpp>
 #include <unordered_map>
+#include <string>
 #include <vector>
-
+#include "Chunk.hpp"
 using namespace std;
-
-class Chunk;
 
 // type is explicitly set the 8bit int taking less space for 1000s of blocks
 enum class BlockType : uint8_t { Air, Dirt, Grass, Stone };
@@ -20,9 +21,9 @@ struct Block {
 };
 
 struct BlockFaceOffsets {
-    glm::ivec2 top;
-    glm::ivec2 sides;
-    glm::ivec2 bottom;
+    glm::u16vec2 top;
+    glm::u16vec2 sides;
+    glm::u16vec2 bottom;
 };
 
 inline const std::unordered_map<BlockType, BlockFaceOffsets> blockTextureOffsets = {
@@ -57,6 +58,19 @@ inline const glm::vec3 dirOffsets[6] = {
     { 1,  0,  0},   // +X (right)
     {-1,  0,  0}    // -X (left)
   };
+
+  struct FaceAxis {
+    int u, v, w; // u & v: 2D plane axes, w: slice axis (fixed)
+};
+
+  const FaceAxis faceAxes[6] = {
+    /* +Z */ { .u=0, .v=1, .w=2 },
+    /* –Z */ { .u=0, .v=1, .w=2 },
+    /* +Y */ { .u=0, .v=2, .w=1 },
+    /* –Y */ { .u=0, .v=2, .w=1 },
+    /* +X */ { .u=1, .v=2, .w=0 },
+    /* –X */ { .u=1, .v=2, .w=0 },
+};
 
   // for each face, the 4 verts (in CCW order to give the right winding)
 inline const glm::vec3 vertexOffsets[6][4] = {
@@ -94,19 +108,6 @@ struct Vertex {
     glm::vec2 TexCoords;
 };
 
-struct PairHash {
-    size_t operator()(const std::pair<int,int>& p) const noexcept {
-      uint64_t key = (uint64_t(uint32_t(p.first)) << 32)
-                   |  uint32_t(p.second);
-      return std::hash<uint64_t>()(key);
-    }
-  };
-
-enum class JobType { GenerateAndBuild, BuildOnly };
-struct ChunkJob {
-  Chunk*  chunk;
-  JobType   type;
-};
 
 
 

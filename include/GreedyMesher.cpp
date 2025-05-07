@@ -8,8 +8,6 @@
 #include <array>
 #include <vector>
 
- 
-
 void GreedyMesher::GreedyMesh(const std::array<BlockType, (WIDTH + 2)*(HEIGHT + 2)*(DEPTH + 2)>& chunkBlockMap, std::vector<Vertex>& verts, std::vector<uint32_t>& idx, int chunkX, int chunkZ, World& world)
 {
     for (int dir = 0; dir < 6; dir++)
