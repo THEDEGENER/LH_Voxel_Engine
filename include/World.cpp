@@ -6,6 +6,7 @@
 #include "SafeQueue.hpp"
 #include "shader_m.h"
 #include "VoxelTypes.hpp"
+#include "scripts/Loader.h"
 
 
 World::World() 

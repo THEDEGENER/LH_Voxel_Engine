@@ -2,7 +2,7 @@
 #include <array>
 #include <vector>
 #include <memory>
-#include "Mesh.h"          
+#include "Mesh.hpp"          
 #include "VoxelTypes.hpp"   
  
 

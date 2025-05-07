@@ -4,6 +4,7 @@
 #include <string>
 #include <filesystem>
 #include "include/stb_image.h"
+#include <iostream>
 
 class Loader {
     public:
