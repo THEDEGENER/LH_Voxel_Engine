@@ -21,7 +21,7 @@ void GreedyMesher::GreedyMesh(const std::array<BlockType, WIDTH * HEIGHT * DEPTH
         maxSize[2] = DEPTH;
         int maxU = maxSize[axis.u];      // e.g. if A.u==0, size[X], if A.u==1, size[Y]
         int maxV = maxSize[axis.v];
-        int maxW = maxSize[axis.w] + 1;
+        int maxW = maxSize[axis.w];
         for (int w = 0; w < maxW; ++w) {
             // prepare 2D mask for this slice
             mask.assign(maxU * maxV, BlockType::Air);
@@ -82,7 +82,7 @@ void GreedyMesher::GreedyMesh(const std::array<BlockType, WIDTH * HEIGHT * DEPTH
                         << static_cast<int>(type)
                         << " (at mask coords u=" << u << ", v=" << v << ")\n";
                     }
-                    auto atlasOffset = blockTextureOffsets.at(BlockType::Grass);
+                    auto atlasOffset = blockTextureOffsets.at(type);
                     
                     if (dir == 0 || dir == 1 || dir == 4 || dir == 5)
                     {

@@ -10,9 +10,9 @@ class World;
 
 class GreedyMesher {
     public:
-    static constexpr int HEIGHT =   WorldSettings::CHUNK_HEIGHT;
-    static constexpr int WIDTH =    WorldSettings::CHUNK_WIDTH;
-    static constexpr int DEPTH =    WorldSettings::CHUNK_DEPTH;
+    static constexpr int HEIGHT =   256;
+    static constexpr int WIDTH =    16;
+    static constexpr int DEPTH =    16;
 
     float atlasWidth    = CONFIG.atlasWidth;    // actual pixel width of atlas
     float atlasHeight   = CONFIG.atlasHeight; // actual pixel height of atlas
