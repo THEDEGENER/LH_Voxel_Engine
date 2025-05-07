@@ -33,7 +33,7 @@ void World::updateVisibleChunks()
   int playerChunkZ = int(floor(playerPos.z / Chunk::DEPTH));
 
   // loop a 3×3 (or NxN) area around that chunk
-  static constexpr int R = 3;
+  static constexpr int R = 15;
   for (int dz = -R; dz <= R; ++dz) {
     for (int dx = -R; dx <= R; ++dx) {
       int cx = playerChunkX + dx;
