@@ -6,8 +6,9 @@
 #include "VoxelTypes.hpp"
 #include "Mesh.hpp"   
 #include "Noise.h"
+#include "GreedyMesher.hpp"
 
-
+class World;
 
 class Chunk
 {
@@ -27,9 +28,10 @@ class Chunk
     std::atomic<bool> scheduled;
 
     void generate();
-    void buildMesh();
+    void buildMesh(World& world);
     void draw(Shader& shader, GLuint& atlasText);
     void setData();
+    BlockType getBlock(int x, int y, int z) const;
 
     bool IsAabbVisible(const std::vector<glm::vec4>& frustumPlanes);
     std::vector<glm::vec3> GetAABBVertices(const AABB& box);
@@ -37,7 +39,6 @@ class Chunk
     private:
     inline int index(int x, int y, int z) const;
     void addFaceQuad(std::vector<Vertex>& verts, std::vector<uint32_t>& idx, int x, int y, int z, int dir, glm::vec2& atlasOffset);
-    BlockType getBlock(int x, int y, int z) const;
     void setBlock(int x, int y, int z, BlockType type);
 
     std::vector<Vertex> verts;
@@ -49,4 +50,5 @@ class Chunk
     std::array<BlockType, WIDTH*HEIGHT*DEPTH> blocks;
     Mesh mesh;
     Noise noise{ seed };
+    GreedyMesher greedy;
 };

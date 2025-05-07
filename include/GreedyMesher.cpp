@@ -1,5 +1,4 @@
 // GreedyMesher.hpp
-#pragma once
 
 #include "World.hpp"
 #include "VoxelTypes.hpp"
@@ -7,8 +6,9 @@
 #include "GreedyMesher.hpp"
 #include <array>
 #include <vector>
+#include <iostream>
 
-void GreedyMesher::GreedyMesh(const std::array<BlockType, (WIDTH + 2)*(HEIGHT + 2)*(DEPTH + 2)>& chunkBlockMap, std::vector<Vertex>& verts, std::vector<uint32_t>& idx, int chunkX, int chunkZ, World& world)
+void GreedyMesher::GreedyMesh(const std::array<BlockType, WIDTH * HEIGHT * DEPTH>& chunkBlockMap, std::vector<Vertex>& verts, std::vector<uint32_t>& idx, int chunkX, int chunkZ, World& world)
 {
     for (int dir = 0; dir < 6; dir++)
     {
@@ -76,7 +76,13 @@ void GreedyMesher::GreedyMesh(const std::array<BlockType, (WIDTH + 2)*(HEIGHT + 
                     int realX = coords[0] - 1;
                     int realY = coords[1] - 1;
                     int realZ = coords[2] - 1;
-                    auto atlasOffset = blockTextureOffsets.at(type);
+                    auto it = blockTextureOffsets.find(type);
+                    if (it == blockTextureOffsets.end()) {
+                        std::cerr << "ERROR: no texture offset for block type "
+                        << static_cast<int>(type)
+                        << " (at mask coords u=" << u << ", v=" << v << ")\n";
+                    }
+                    auto atlasOffset = blockTextureOffsets.at(BlockType::Grass);
                     
                     if (dir == 0 || dir == 1 || dir == 4 || dir == 5)
                     {
@@ -103,7 +109,7 @@ void GreedyMesher::GreedyMesh(const std::array<BlockType, (WIDTH + 2)*(HEIGHT + 
 }
 
   // read without marking dirty
-BlockType GreedyMesher::getChunkBlock(int x, int y, int z, const std::array<BlockType, (WIDTH + 2)*(HEIGHT + 2)*(DEPTH + 2)>& chunkBlockMap, int chunkX, int chunkZ, World& world, int dir) {
+BlockType GreedyMesher::getChunkBlock(int x, int y, int z, const std::array<BlockType, WIDTH * HEIGHT * DEPTH>& chunkBlockMap, int chunkX, int chunkZ, World& world, int dir) {
     if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT || z < 0 || z >= DEPTH) {
         return world.globalGetNeighbourChunkBlock(chunkX, chunkZ, x, y, z, dir);
     }

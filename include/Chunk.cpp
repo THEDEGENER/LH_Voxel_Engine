@@ -3,17 +3,10 @@
 #include <vector>
 #include <memory>
 #include "Mesh.hpp"          
-#include "VoxelTypes.hpp"   
+#include "VoxelTypes.hpp" 
+#include "World.hpp"  
+#include "GreedyMesher.hpp"
  
-
-
-
-    // classic Minecraft chunk size
-    static constexpr int WIDTH  = 16;
-    static constexpr int HEIGHT = 256;
-    static constexpr int DEPTH  = 16;
-
-    static constexpr int MAX_SURFACE = 64;
 
     Chunk::Chunk(int chunkX, int chunkZ) : chunkX(chunkX), chunkZ(chunkZ), dirty(true), scheduled(false),
         box{
@@ -105,11 +98,11 @@
         
     }
 
-    void Chunk::buildMesh() 
+    void Chunk::buildMesh(World& world) 
     {
         verts.clear();
         idx.clear();
-        
+        greedy.GreedyMesh(blocks, verts, idx, chunkX, chunkZ, world);
     }
 
     void Chunk::setData()

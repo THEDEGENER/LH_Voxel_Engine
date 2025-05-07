@@ -124,7 +124,7 @@ void World::workerThreadPool()
       c->generate();
     }
     std::cout << "thread: " << std::this_thread::get_id() << " is starting a build task" << std::endl;
-    c->buildMesh();
+    c->buildMesh(*this);
     c->scheduled = false;
     uploadQueue.push(c);
   }
@@ -148,4 +148,25 @@ void World::manageChunks(const glm::vec3& newPos, Shader& shader, const std::vec
   updatePlayerPos(newPos, frustumPlanes);
   uploadFinishedChunksToGPU();
   drawVisibleChunks(shader);
+}
+
+BlockType World::globalGetNeighbourChunkBlock(int chunkX, int chunkZ, int x, int z, int y, int dir)
+{
+  glm::vec3 offset = dirOffsets[dir];
+  int dx = static_cast<int>(offset.x);
+  int dz = static_cast<int>(offset.z);
+  int neighborCX = chunkX + dx;
+  int neighborCZ = chunkZ + dz;
+  auto key = std::make_pair(neighborCX, neighborCZ); 
+  int localX = x + dx;
+  int localY = y;
+  int localZ = z + dz;
+  auto it = chunks.find(key);
+  if (it == chunks.end())
+  {
+    return BlockType::Air;
+  }
+  Chunk* c = it->second.get();
+  BlockType type = c->getBlock(localX, localY, localZ);
+  return type;
 }

@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <memory>
 #include <thread>
-#include "include/VoxelTypes.hpp"       // for BlockType, etc.
+#include "VoxelTypes.hpp"       // for BlockType, etc.
 #include "SafeQueue.hpp"        // for SafeQueue<ChunkJob>
 #include "shader_m.h"           // for Shader
 #include "Chunk.hpp"
@@ -21,6 +21,7 @@ class World
     ~World();
 
     void manageChunks(const glm::vec3& newPos, Shader& shader, const std::vector<glm::vec4>& frustumPlanes);
+    BlockType globalGetNeighbourChunkBlock(int chunkX, int chunkZ, int x, int z, int y, int dir);
     
     private:
         // Internal pipeline stages:

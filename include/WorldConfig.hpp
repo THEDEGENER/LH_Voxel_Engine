@@ -9,7 +9,7 @@ struct WorldSettings {
     siv::PerlinNoise::seed_type seed = 238947;
     float atlasWidth = 1024.0f;
     float atlasHeight = 512.0f;
-    float tileSize = 16.0f;
+    float tileSizePx = 16.0f;
 
     static WorldSettings& instance() {
         static WorldSettings instance;
