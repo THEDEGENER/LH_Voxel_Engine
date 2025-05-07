@@ -4,6 +4,7 @@
 #include <vector>
 #include "VoxelTypes.hpp"
 #include "World.hpp"
+#include "WorldConfig.hpp"
 
 class GreedyMesher {
     public:

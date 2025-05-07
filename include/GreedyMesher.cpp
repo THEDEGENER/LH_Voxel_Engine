@@ -7,10 +7,10 @@
 #include "GreedyMesher.hpp"
 #include <array>
 #include <vector>
-#include "WorldConfig.hpp"
+
  
 
-void GreedyMesh(const std::array<BlockType, (WIDTH + 2)*(HEIGHT + 2)*(DEPTH + 2)>& chunkBlockMap, std::vector<Vertex>& verts, std::vector<uint32_t>& idx, int chunkX, int chunkZ, World& world)
+void GreedyMesher::GreedyMesh(const std::array<BlockType, (WIDTH + 2)*(HEIGHT + 2)*(DEPTH + 2)>& chunkBlockMap, std::vector<Vertex>& verts, std::vector<uint32_t>& idx, int chunkX, int chunkZ, World& world)
 {
     for (int dir = 0; dir < 6; dir++)
     {
@@ -105,23 +105,23 @@ void GreedyMesh(const std::array<BlockType, (WIDTH + 2)*(HEIGHT + 2)*(DEPTH + 2)
 }
 
   // read without marking dirty
-BlockType getChunkBlock(int x, int y, int z, const std::array<BlockType, (WIDTH + 2)*(HEIGHT + 2)*(DEPTH + 2)>& chunkBlockMap, int chunkX, int chunkZ, World& world, int dir) {
+BlockType GreedyMesher::getChunkBlock(int x, int y, int z, const std::array<BlockType, (WIDTH + 2)*(HEIGHT + 2)*(DEPTH + 2)>& chunkBlockMap, int chunkX, int chunkZ, World& world, int dir) {
     if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT || z < 0 || z >= DEPTH) {
         return world.globalGetNeighbourChunkBlock(chunkX, chunkZ, x, y, z, dir);
     }
     return chunkBlockMap[index(x, y, z)];
 }
 // Helper to index into the flat 2D mask buffer
-inline BlockType& maskAt(int u, int v, int rowWidth) {
+inline BlockType& GreedyMesher::maskAt(int u, int v, int rowWidth) {
     return mask[u + v * rowWidth];
 }
-inline const BlockType& maskAt(int u, int v, int rowWidth) const {
+inline const BlockType& GreedyMesher::maskAt(int u, int v, int rowWidth) const {
     return mask[u + v * rowWidth];
 }
-inline int index(int x, int y, int z) const {
+inline int GreedyMesher::index(int x, int y, int z) const {
     return x + WIDTH * (y + HEIGHT * z);
 }
-void addFaceQuad(std::vector<Vertex>& verts, std::vector<uint32_t>& idx, int x, int y, int z, int dir, const glm::vec2& atlasOffset)
+void GreedyMesher::addFaceQuad(std::vector<Vertex>& verts, std::vector<uint32_t>& idx, int x, int y, int z, int dir, const glm::vec2& atlasOffset)
 {
     // populate vectors then they are passed to mesh in the build function
     auto baseIndicies = verts.size();
