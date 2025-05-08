@@ -32,6 +32,9 @@ public:
     {
         std::unique_lock<std::mutex> lock(_m);
         _cv.wait(lock, [&]{ return !_q.empty() || _closed == true; });  // blocks here until someone .push()
+        if (_q.empty() && _closed) {
+            return T();
+        }
         T item = std::move(_q.front());
         _q.pop();
         return item;

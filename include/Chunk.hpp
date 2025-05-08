@@ -40,7 +40,7 @@ class Chunk
 
     private:
     inline int index(int x, int y, int z) const;
-    void addFaceQuad(std::vector<Vertex>& verts, std::vector<uint32_t>& idx, int x, int y, int z, int dir, glm::vec2& atlasOffset);
+    void addFaceQuad(std::vector<Vertex>& verts, std::vector<uint32_t>& idx, int x, int y, int z, int dir, BlockType type);
     void setBlock(int x, int y, int z, BlockType type);
 
     std::vector<Vertex> verts;

@@ -25,21 +25,19 @@ World::~World()
   }
 }
 
-//std::array<BlockType, WorldSettings::CHUNK_SIZE>* World::getChunk(int chunkX, int chunkZ, int dir)
-//{
-//  glm::vec3 offset = dirOffsets[dir];
-//  int worldX = chunkX + offset.x;
-//  int worldZ = chunkZ + offset.z;
-//
-//  auto key = std::make_pair(worldX, worldZ);
-//  if (chunks.contains(key))
-//  {
-//    auto& chunk = chunks.at(key)->blocks;
-//    return &chunk;
-//  } else {
-//    return nullptr;
-//  }
-//}
+BlockType World::getChunk(int nChunkX, int nChunkZ, int tx, int ty, int tz)
+{
+  int nx = (tx + WorldSettings::CHUNK_WIDTH) % WorldSettings::CHUNK_WIDTH;
+  int nz = (tz + WorldSettings::CHUNK_WIDTH) % WorldSettings::CHUNK_WIDTH;
+
+  auto key = std::make_pair(nChunkX, nChunkZ);
+
+  if (chunks.contains(key)) {
+    BlockType block_t = chunks.at(key)->getBlock(nx, ty, nz);
+    return block_t;
+  }
+  return BlockType::Air;
+}
 
 void World::updateVisibleChunks()
 {

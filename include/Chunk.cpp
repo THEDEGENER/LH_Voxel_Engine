@@ -8,12 +8,12 @@
 #include "GreedyMesher.hpp"
  
 
-    Chunk::Chunk(int chunkX, int chunkZ, World& worldptr) : chunkX(chunkX), chunkZ(chunkZ), world(worldptr), dirty(true), scheduled(false),
+    Chunk::Chunk(int chunkX, int chunkZ, World& worldptr) : chunkX(chunkX), chunkZ(chunkZ), dirty(true), scheduled(false),
         box{
             glm::vec3(chunkX * float(WIDTH), 0.0f, chunkZ * float(DEPTH)), 
             glm::vec3(chunkX * float(WIDTH) + float(WIDTH), 
             float(HEIGHT), chunkZ * float(DEPTH) + float(DEPTH))
-        } 
+        }, world(worldptr)
     {
       // initialize everything to Air
       blocks.fill(BlockType::Air);
@@ -57,12 +57,23 @@
         }
     }
 
-    void Chunk::addFaceQuad(std::vector<Vertex>& verts, std::vector<uint32_t>& idx, int x, int y, int z, int dir, glm::vec2& atlasOffset)
+    void Chunk::addFaceQuad(std::vector<Vertex>& verts, std::vector<uint32_t>& idx, int x, int y, int z, int dir, BlockType type)
     {
         // populate vectors then they are passed to mesh in the build function
         float atlasWidth = 1024.0f;   // actual pixel width of atlas
         float atlasHeight = 512.0f;  // actual pixel height of atlas
         float tileSizePx = 16.0f;
+
+        auto atlasOffset = blockTextureOffsets.at(type);
+
+        glm::vec2 textCoord;
+        if (dir == 0 || dir == 1 || dir == 4 || dir == 5) {
+            textCoord = atlasOffset.sides;
+        } else if (dir == 2) {
+            textCoord = atlasOffset.top;
+        } else if (dir == 3) {
+            textCoord = atlasOffset.bottom;
+        }
 
         auto baseIndicies = verts.size();
         auto normal = dirOffsets[dir];
@@ -77,7 +88,7 @@
             glm::ivec3 pos = glm::vec3(x, y, z) + vertexOffsets[dir][i];
 
             // this takes the scale from the dimensions of the atlas photo and then sets the u0, v0
-            glm::vec2 uv = faceUVs[i] * uvScale + atlasOffset * uvScale;
+            glm::vec2 uv = faceUVs[i] * uvScale + textCoord * uvScale;
 
             verts.push_back(Vertex{
                 .Position = pos,
@@ -112,65 +123,38 @@
 
                     BlockType type = getBlock(x, y, z);
                     // this is now a struct of top , sides , bottom
-                    auto atlasOffset = blockTextureOffsets.at(type);
                     for (int d = 0; d < 6; d++)
                     {
                         // loop through the 6 faces and use a direction offset array to store to values
                         glm::ivec3 offsets = dirOffsets[d];
-                        int nx = x + offsets.x;
-                        int ny = y + offsets.y;
-                        int nz = z + offsets.z;
+                        int tx = x + offsets.x;
+                        int ty = y + offsets.y;
+                        int tz = z + offsets.z;
 
-                        // assume out of bounds is air for now
-                        bool isBorder = nx<0 || nx>=WIDTH || nz<0 || nz>=DEPTH;
-                        bool neighborIsAir = !isBorder && getBlock(nx,ny,nz) == BlockType::Air;
+                        int chunkOffsetX = 0;
+                        if (tx <  0) chunkOffsetX = -1;
+                        if (tx >= WorldSettings::CHUNK_WIDTH) chunkOffsetX = +1;
 
-                        if (neighborIsAir)
-                        {
-                            // try to regen perlin noise for border faces to see if it improves performance
-                            if (d == 0 || d == 1 || d == 4 || d == 5)
-                            {
-                                glm::vec2 textcoord = atlasOffset.sides;
-                                addFaceQuad(verts, idx, x, y, z, d, textcoord);
+                        int chunkOffsetZ = 0;
+                        if (tz <  0) chunkOffsetZ = -1;
+                        if (tz >= WorldSettings::CHUNK_WIDTH) chunkOffsetZ = +1;
 
-                            } else if (d == 2)
-                            {
-                                glm::vec2 textcoord = atlasOffset.top;
-                                addFaceQuad(verts, idx, x, y, z, d, textcoord);
-
-                            } else if (d == 3)
-                            {
-                                glm::vec2 textcoord = atlasOffset.bottom;
-                                addFaceQuad(verts, idx, x, y, z, d, textcoord);
-
+                        if (chunkOffsetX == 0 && chunkOffsetZ == 0) {
+                            if (getBlock(tx, ty, tz) == BlockType::Air) {
+                                addFaceQuad(verts, idx, x, y, z, d, type);
                             }
-                        } else if (isBorder) {
-                            
-                            int worldX = chunkX * WIDTH + nx;
-                            int worldZ = chunkZ * DEPTH + nz;
-                            auto neighborHeight = noise.getWorldNoise(worldX, worldZ);
-                            int neighborSurfaceY = static_cast<int>(neighborHeight * MAX_SURFACE);
-                            bool neighborIsAirBorder = (y > neighborSurfaceY);
+                        } else {
+                            int nChunkX = chunkX + chunkOffsetX;
+                            int nChunkZ = chunkZ + chunkOffsetZ;
 
-                            if (neighborIsAirBorder) {
-                                if (d == 0 || d == 1 || d == 4 || d == 5) {
-                                    glm::vec2 textcoord = atlasOffset.sides;
-                                    addFaceQuad(verts, idx, x, y, z, d, textcoord);
-                                } else if (d == 2) {
-                                    glm::vec2 textcoord = atlasOffset.top;
-                                    addFaceQuad(verts, idx, x, y, z, d, textcoord);
-                                } else if (d == 3) {
-                                    glm::vec2 textcoord = atlasOffset.bottom;
-                                    addFaceQuad(verts, idx, x, y, z, d, textcoord);
-                                }
+                            if (world.getChunk(nChunkX, nChunkZ, tx, y, tz) == BlockType::Air) {
+                                addFaceQuad(verts, idx, x, y, z, d, type);
                             }
                         }
                     }
                 }
             }
         }
-        // removed for multithreading
-        // mesh.setData(verts, idx); 
     }
 
     void Chunk::setData()
