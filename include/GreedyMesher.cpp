@@ -87,21 +87,23 @@ void GreedyMesher::GreedyMesh(const std::array<BlockType, WIDTH * HEIGHT * DEPTH
                     if (dir == 0 || dir == 1 || dir == 4 || dir == 5)
                     {
                         glm::vec2 textCoords = atlasOffset.sides;
-                        addFaceQuad(verts, idx, realX, realY, realZ, dir, textCoords);
+                        addFaceQuad(verts, idx, realX, realY, realZ, dir, textCoords, width, height);
                     } 
                     else if (dir == 2) 
                     {
                         glm::vec2 textCoords = atlasOffset.top;
-                        addFaceQuad(verts, idx, realX, realY, realZ, dir, textCoords);
+                        addFaceQuad(verts, idx, realX, realY, realZ, dir, textCoords, width, height);
                     }
                     else if (dir == 3)
                     {
                         glm::vec2 textCoords = atlasOffset.bottom;
-                        addFaceQuad(verts, idx, realX, realY, realZ, dir, textCoords);
+                        addFaceQuad(verts, idx, realX, realY, realZ, dir, textCoords, width, height);
                     } 
                     for (int yy = 0; yy < height; ++yy)
                     for (int xx = 0; xx < width;  ++xx)
                       mask[(u + xx) + (v + yy) * maxU] = BlockType::Air;
+
+                    u += width - 1;
                 }
             }
         }
@@ -111,7 +113,7 @@ void GreedyMesher::GreedyMesh(const std::array<BlockType, WIDTH * HEIGHT * DEPTH
   // read without marking dirty
 BlockType GreedyMesher::getChunkBlock(int x, int y, int z, const std::array<BlockType, WIDTH * HEIGHT * DEPTH>& chunkBlockMap, int chunkX, int chunkZ, World& world, int dir) {
     if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT || z < 0 || z >= DEPTH) {
-        return world.globalGetNeighbourChunkBlock(chunkX, chunkZ, x, y, z, dir);
+        return BlockType::Air;
     }
     return chunkBlockMap[index(x, y, z)];
 }
@@ -125,8 +127,15 @@ inline const BlockType& GreedyMesher::maskAt(int u, int v, int rowWidth) const {
 inline int GreedyMesher::index(int x, int y, int z) const {
     return x + WIDTH * (y + HEIGHT * z);
 }
-void GreedyMesher::addFaceQuad(std::vector<Vertex>& verts, std::vector<uint32_t>& idx, int x, int y, int z, int dir, const glm::vec2& atlasOffset)
+void GreedyMesher::addFaceQuad(std::vector<Vertex>& verts, std::vector<uint32_t>& idx,
+                               int x, int y, int z,
+                               int dir,
+                               const glm::vec2& atlasOffset,
+                               int width,
+                               int height)
 {
+    // determine the face’s local axes for sizing the quad
+    auto axis = faceAxes[dir];
     // populate vectors then they are passed to mesh in the build function
     auto baseIndicies = verts.size();
     auto normal = dirOffsets[dir];
@@ -134,10 +143,20 @@ void GreedyMesher::addFaceQuad(std::vector<Vertex>& verts, std::vector<uint32_t>
     // space and then add that to the vertex array so when drawn each struct is each triangle
     for (int i = 0; i < 4; i++)
     {
-        // this grabs the unique value for the given direction to increment x, y or z
-        glm::vec3 pos = glm::vec3(x, y, z) + vertexOffsets[dir][i];
-        // this takes the scale from the dimensions of the atlas photo and then sets the u0, v0
-        glm::vec2 uv = faceUVs[i] * uvScale + atlasOffset * uvScale;
+        // scale offsets by the merged quad extents
+        glm::vec3 offset = vertexOffsets[dir][i];
+        glm::vec3 scaleVec(
+            axis.u == 0 ? width : (axis.v == 0 ? height : 1),
+            axis.u == 1 ? width : (axis.v == 1 ? height : 1),
+            axis.u == 2 ? width : (axis.v == 2 ? height : 1)
+        );
+        glm::vec3 pos = glm::vec3(x, y, z) + glm::vec3(offset.x * scaleVec.x,
+                                                        offset.y * scaleVec.y,
+                                                        offset.z * scaleVec.z);
+        // adjust UVs to span the merged area
+        glm::vec2 uvOffset = atlasOffset * uvScale;
+        glm::vec2 uvScaleQuad = uvScale * glm::vec2(width, height);
+        glm::vec2 uv = uvOffset + faceUVs[i] * uvScaleQuad;
         verts.push_back(Vertex{
             .Position = pos,
             .Normal = normal,

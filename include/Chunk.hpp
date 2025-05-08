@@ -13,7 +13,7 @@ class World;
 class Chunk
 {
     public:
-    Chunk(int chunkX, int chunkZ);
+    Chunk(int chunkX, int chunkZ, World& world);
 
     int chunkX;
     int chunkZ;
@@ -27,8 +27,10 @@ class Chunk
     std::atomic<bool> dirty;
     std::atomic<bool> scheduled;
 
+    std::array<BlockType, WIDTH*HEIGHT*DEPTH> blocks;
+
     void generate();
-    void buildMesh(World& world);
+    void buildMesh();
     void draw(Shader& shader, GLuint& atlasText);
     void setData();
     BlockType getBlock(int x, int y, int z) const;
@@ -47,8 +49,7 @@ class Chunk
     const siv::PerlinNoise::seed_type seed = 123456u;
 
     AABB box;          
-    std::array<BlockType, WIDTH*HEIGHT*DEPTH> blocks;
     Mesh mesh;
     Noise noise{ seed };
-    GreedyMesher greedy;
+    World& world;
 };

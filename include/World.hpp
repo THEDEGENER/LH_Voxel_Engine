@@ -21,7 +21,7 @@ class World
     ~World();
 
     void manageChunks(const glm::vec3& newPos, Shader& shader, const std::vector<glm::vec4>& frustumPlanes);
-    BlockType globalGetNeighbourChunkBlock(int chunkX, int chunkZ, int x, int z, int y, int dir);
+    // std::array<BlockType, WorldSettings::CHUNK_SIZE>* World::getChunk(int chunkX, int chunkZ, int dir);
     
     private:
         // Internal pipeline stages:

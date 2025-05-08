@@ -157,7 +157,7 @@ int main()
         blockShader.setMat4("view", view);
 
         world.manageChunks(camera.Position, blockShader, frustumPlanes);
-
+        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glEndQuery(GL_PRIMITIVES_GENERATED);
 
         GLuint primitives;

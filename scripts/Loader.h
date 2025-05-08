@@ -1,11 +1,11 @@
 #ifndef FILESYSTEM_H
 #define FILESYSTEM_H
 
+#include "include/stb_image.h"
 #include <string>
 #include <filesystem>
-#include "include/stb_image.h"
 #include <iostream>
-
+ 
 class Loader {
     public:
         static std::string getPath(const std::string &relativePath) 

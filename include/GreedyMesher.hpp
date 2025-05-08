@@ -27,7 +27,12 @@ class GreedyMesher {
 
     private:
     inline int index(int x, int y, int z) const;
-    void addFaceQuad(std::vector<Vertex>& verts, std::vector<uint32_t>& idx, int x, int y, int z, int dir, const glm::vec2& atlasOffset);
+    void addFaceQuad(std::vector<Vertex>& verts, std::vector<uint32_t>& idx,
+        int x, int y, int z,
+        int dir,
+        const glm::vec2& atlasOffset,
+        int width,
+        int height);
     
     std::vector<BlockType> mask;
 };

@@ -8,7 +8,7 @@
 #include "GreedyMesher.hpp"
  
 
-    Chunk::Chunk(int chunkX, int chunkZ) : chunkX(chunkX), chunkZ(chunkZ), dirty(true), scheduled(false),
+    Chunk::Chunk(int chunkX, int chunkZ, World& worldptr) : chunkX(chunkX), chunkZ(chunkZ), world(worldptr), dirty(true), scheduled(false),
         box{
             glm::vec3(chunkX * float(WIDTH), 0.0f, chunkZ * float(DEPTH)), 
             glm::vec3(chunkX * float(WIDTH) + float(WIDTH), 
@@ -98,11 +98,79 @@
         
     }
 
-    void Chunk::buildMesh(World& world) 
+    void Chunk::buildMesh() 
     {
         verts.clear();
         idx.clear();
-        greedy.GreedyMesh(blocks, verts, idx, chunkX, chunkZ, world);
+        for (int x = 0; x < WIDTH; x++)
+        {
+            for (int z = 0; z < DEPTH; z++)
+            {
+                for (int y = 0; y < HEIGHT; y++)
+                {
+                    if (getBlock(x, y, z) == BlockType::Air) continue;
+
+                    BlockType type = getBlock(x, y, z);
+                    // this is now a struct of top , sides , bottom
+                    auto atlasOffset = blockTextureOffsets.at(type);
+                    for (int d = 0; d < 6; d++)
+                    {
+                        // loop through the 6 faces and use a direction offset array to store to values
+                        glm::ivec3 offsets = dirOffsets[d];
+                        int nx = x + offsets.x;
+                        int ny = y + offsets.y;
+                        int nz = z + offsets.z;
+
+                        // assume out of bounds is air for now
+                        bool isBorder = nx<0 || nx>=WIDTH || nz<0 || nz>=DEPTH;
+                        bool neighborIsAir = !isBorder && getBlock(nx,ny,nz) == BlockType::Air;
+
+                        if (neighborIsAir)
+                        {
+                            // try to regen perlin noise for border faces to see if it improves performance
+                            if (d == 0 || d == 1 || d == 4 || d == 5)
+                            {
+                                glm::vec2 textcoord = atlasOffset.sides;
+                                addFaceQuad(verts, idx, x, y, z, d, textcoord);
+
+                            } else if (d == 2)
+                            {
+                                glm::vec2 textcoord = atlasOffset.top;
+                                addFaceQuad(verts, idx, x, y, z, d, textcoord);
+
+                            } else if (d == 3)
+                            {
+                                glm::vec2 textcoord = atlasOffset.bottom;
+                                addFaceQuad(verts, idx, x, y, z, d, textcoord);
+
+                            }
+                        } else if (isBorder) {
+                            
+                            int worldX = chunkX * WIDTH + nx;
+                            int worldZ = chunkZ * DEPTH + nz;
+                            auto neighborHeight = noise.getWorldNoise(worldX, worldZ);
+                            int neighborSurfaceY = static_cast<int>(neighborHeight * MAX_SURFACE);
+                            bool neighborIsAirBorder = (y > neighborSurfaceY);
+
+                            if (neighborIsAirBorder) {
+                                if (d == 0 || d == 1 || d == 4 || d == 5) {
+                                    glm::vec2 textcoord = atlasOffset.sides;
+                                    addFaceQuad(verts, idx, x, y, z, d, textcoord);
+                                } else if (d == 2) {
+                                    glm::vec2 textcoord = atlasOffset.top;
+                                    addFaceQuad(verts, idx, x, y, z, d, textcoord);
+                                } else if (d == 3) {
+                                    glm::vec2 textcoord = atlasOffset.bottom;
+                                    addFaceQuad(verts, idx, x, y, z, d, textcoord);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // removed for multithreading
+        // mesh.setData(verts, idx); 
     }
 
     void Chunk::setData()

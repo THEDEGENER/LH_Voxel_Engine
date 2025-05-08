@@ -35,7 +35,6 @@ inline const std::unordered_map<BlockType, BlockFaceOffsets> blockTextureOffsets
 
 struct Plane {
     glm::vec3 normal = { 0.f, 1.f, 0.f };
-
     float distance = 0.f;
 };
 
