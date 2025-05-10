@@ -7,6 +7,7 @@
 #include "shader_m.h"
 #include "VoxelTypes.hpp"
 #include "scripts/Loader.h"
+#include "WorldConfig.hpp"
 
 
 World::World() 
@@ -27,13 +28,14 @@ World::~World()
 
 BlockType World::getChunk(int nChunkX, int nChunkZ, int tx, int ty, int tz)
 {
-  int nx = (tx + WorldSettings::CHUNK_WIDTH) % WorldSettings::CHUNK_WIDTH;
-  int nz = (tz + WorldSettings::CHUNK_WIDTH) % WorldSettings::CHUNK_WIDTH;
+  int nx = (tx % WorldSettings::CHUNK_WIDTH + WorldSettings::CHUNK_WIDTH) % WorldSettings::CHUNK_WIDTH;
+  int nz = (tz % WorldSettings::CHUNK_WIDTH + WorldSettings::CHUNK_WIDTH) % WorldSettings::CHUNK_WIDTH;
 
   auto key = std::make_pair(nChunkX, nChunkZ);
 
   if (chunks.contains(key)) {
     BlockType block_t = chunks.at(key)->getBlock(nx, ty, nz);
+    std::cout << "returning a block type of: " << static_cast<int>(block_t) << std::endl;
     return block_t;
   }
   return BlockType::Air;
@@ -93,7 +95,6 @@ void World::uploadFinishedChunksToGPU()
 
 void World::drawVisibleChunks(Shader& shader)
 {
-  std::cout << "numChunks " << visibleChunks.size() << std::endl;
   for (auto& chunk : visibleChunks) 
   {
     chunk->draw(shader, atlasText);
@@ -134,10 +135,8 @@ void World::workerThreadPool()
     c->dirty = false;
     if (job.type == JobType::GenerateAndBuild)
     {
-      std::cout << "thread: " << std::this_thread::get_id() << " is starting a gen task" << std::endl;
       c->generate();
     }
-    std::cout << "thread: " << std::this_thread::get_id() << " is starting a build task" << std::endl;
     c->buildMesh();
     c->scheduled = false;
     uploadQueue.push(c);
@@ -148,7 +147,6 @@ void World::startWorldThreads()
 {
   auto hc = 1;
   unsigned int threadCount = hc > 0 ? hc : 1;
-  std::cout << "threadCount: " << threadCount << std::endl;
   for (unsigned int i = 0; i < threadCount; i++)
   {
     // this could also be a lambda function that calls this->workerThreadPool

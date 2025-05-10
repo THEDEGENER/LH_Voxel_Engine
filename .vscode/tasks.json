@@ -15,7 +15,6 @@
         "include/World.cpp",
         "include/Chunk.cpp",
         "include/Mesh.cpp",
-        "include/GreedyMesher.cpp",
         "${file}", // e.g. main.cpp
         "-std=c++20",
         "-g",

@@ -157,7 +157,7 @@ int main()
         blockShader.setMat4("view", view);
 
         world.manageChunks(camera.Position, blockShader, frustumPlanes);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glEndQuery(GL_PRIMITIVES_GENERATED);
 
         GLuint primitives;
@@ -167,10 +167,10 @@ int main()
         frameCounter++;
         indexSum += primitives;
 
-        if (frameCounter == 60) {
-          std::cout << "Avg indices/frame: " << (indexSum/60) << "\n";
-          frameCounter = indexSum = 0;
-        }
+        // if (frameCounter == 60) {
+        //   std::cout << "Avg indices/frame: " << (indexSum/60) << "\n";
+        //   frameCounter = indexSum = 0;
+        // }
         
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------

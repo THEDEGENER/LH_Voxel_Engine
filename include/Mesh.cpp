@@ -33,21 +33,21 @@ void Mesh::setData(std::vector<Vertex>& verts,
     glBufferData(GL_ARRAY_BUFFER,
                  vertices.size() * sizeof(Vertex),
                  vertices.data(),
-                 GL_DYNAMIC_DRAW);
+                 GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,
                  indices.size() * sizeof(uint32_t),
                  indices.data(),
-                 GL_DYNAMIC_DRAW);
+                 GL_STATIC_DRAW);
     
 }
 void Mesh::draw(Shader& shader, GLuint& atlasText)
 {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, atlasText);
-    shader.setInt("texture1", 0);
+    shader.setInt("atlasTex", 0);
     glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, nullptr);
+    glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 }
 // GPU handles
@@ -64,9 +64,9 @@ void Mesh::setupMesh()
     glBindVertexArray(VAO);
     // Reserve empty buffers
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
     // Position
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Position));

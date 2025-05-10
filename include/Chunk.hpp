@@ -6,7 +6,7 @@
 #include "VoxelTypes.hpp"
 #include "Mesh.hpp"   
 #include "Noise.h"
-#include "GreedyMesher.hpp"
+
 
 class World;
 
@@ -41,6 +41,8 @@ class Chunk
     private:
     inline int index(int x, int y, int z) const;
     void addFaceQuad(std::vector<Vertex>& verts, std::vector<uint32_t>& idx, int x, int y, int z, int dir, BlockType type);
+    void addFaceQuad(std::vector<Vertex>& verts, std::vector<uint32_t>& idx, std::array<glm::vec3, 4>& corners, int faceDir, BlockType type);
+    void greedy();
     void setBlock(int x, int y, int z, BlockType type);
 
     std::vector<Vertex> verts;
