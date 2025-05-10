@@ -51,29 +51,29 @@ struct Frustum {
 
 // Directions in greedy-mesh faceDir encoding: 0=+X, 1=-X, 2=+Y, 3=-Y, 4=+Z, 5=-Z
 inline const glm::vec3 dirOffsets[6] = {
-    { 1,  0,  0},  // +X (right)
-    {-1,  0,  0},  // -X (left)
-    { 0,  1,  0},  // +Y (top)
-    { 0, -1,  0},  // -Y (bottom)
-    { 0,  0,  1},  // +Z (front)
-    { 0,  0, -1}   // -Z (back)
+    { 0,  0,  1},   // +Z (front)
+    { 0,  0, -1},   // -Z (back)
+    { 0,  1,  0},   // +Y (top)
+    { 0, -1,  0},   // -Y (bottom)
+    { 1,  0,  0},   // +X (right)
+    {-1,  0,  0}    // -X (left)
 };
 
 // for each face, the 4 verts (in CCW order to give the right winding)
 // Order matches faceDir: 0=+X, 1=-X, 2=+Y, 3=-Y, 4=+Z, 5=-Z
 inline const glm::vec3 vertexOffsets[6][4] = {
-    // +X face
-    {{1,0,0}, {1,0,1}, {1,1,1}, {1,1,0}},
-    // -X face
-    {{0,0,1}, {0,0,0}, {0,1,0}, {0,1,1}},
-    // +Y face
-    {{0,1,1}, {1,1,1}, {1,1,0}, {0,1,0}},
-    // -Y face
-    {{0,0,0}, {1,0,0}, {1,0,1}, {0,0,1}},
-    // +Z face
-    {{0,0,1}, {1,0,1}, {1,1,1}, {0,1,1}},
-    // -Z face
-    {{1,0,0}, {0,0,0}, {0,1,0}, {1,1,0}}
+    // FRONT
+    { {0,0,1}, {1,0,1}, {1,1,1}, {0,1,1} },
+    // BACK
+    { {1,0,0}, {0,0,0}, {0,1,0}, {1,1,0} },
+    // TOP
+    { {0,1,1}, {1,1,1}, {1,1,0}, {0,1,0} },
+    // BOTTOM
+    { {0,0,0}, {1,0,0}, {1,0,1}, {0,0,1} },
+    // RIGHT
+    { {1,0,1}, {1,0,0}, {1,1,0}, {1,1,1} },
+    // LEFT
+    { {0,0,0}, {0,0,1}, {0,1,1}, {0,1,0} }
 };
 
 inline const glm::vec2 faceUVs[4] = {
