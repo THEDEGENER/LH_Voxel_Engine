@@ -8,11 +8,11 @@
 #include "WorldConfig.hpp"
  
 
-    Chunk::Chunk(int chunkX, int chunkZ, World& worldptr) : chunkX(chunkX), chunkZ(chunkZ), dirty(true), scheduled(false),
+    Chunk::Chunk(int chunkX, int chunkZ, World& worldptr) : chunkX(chunkX), chunkZ(chunkZ), dirty(true), scheduled(false), hasBeenGenerated(false),
         box{
-            glm::vec3(chunkX * float(WIDTH), 0.0f, chunkZ * float(DEPTH)), 
-            glm::vec3(chunkX * float(WIDTH) + float(WIDTH), 
-            float(HEIGHT), chunkZ * float(DEPTH) + float(DEPTH))
+            glm::vec3(chunkX * float(WorldSettings::CHUNK_WIDTH), 0.0f, chunkZ * float(WorldSettings::CHUNK_DEPTH)), 
+            glm::vec3(chunkX * float(WorldSettings::CHUNK_WIDTH) + float(WorldSettings::CHUNK_WIDTH), 
+            float(WorldSettings::CHUNK_HEIGHT), chunkZ * float(WorldSettings::CHUNK_DEPTH) + float(WorldSettings::CHUNK_DEPTH))
         }, world(worldptr)
     {
       // initialize everything to Air
@@ -31,16 +31,17 @@
 
     void Chunk::generate()
     {
-        for (int x = 0; x < WIDTH; x++)
+        for (int x = 0; x < WorldSettings::CHUNK_WIDTH; x++)
         {
-            for (int z = 0; z < DEPTH; z++)
+            for (int z = 0; z < WorldSettings::CHUNK_DEPTH; z++)
             {
-                int worldX = chunkX * WIDTH + x;
-                int worldZ = chunkZ * DEPTH + z;
+                int worldX = chunkX * WorldSettings::CHUNK_WIDTH + x;
+                int worldZ = chunkZ * WorldSettings::CHUNK_DEPTH + z;
 
-                double height = noise.getWorldNoise(worldX, worldZ);
-                int surfaceY = static_cast<int>( height * MAX_SURFACE);
-                for (int y = 0; y < HEIGHT; y++)
+                // double height = noise.getWorldNoise(worldX, worldZ);
+                // int surfaceY = static_cast<int>( height * WorldSettings::MAX_SURFACE);
+                int surfaceY = 200;
+                for (int y = 0; y < WorldSettings::CHUNK_HEIGHT; y++)
                 {
                     if (y == surfaceY)
                     {
@@ -55,6 +56,7 @@
                 }
             }
         }
+        hasBeenGenerated = true;
     }
 
     void Chunk::addFaceQuad(std::vector<Vertex>& verts, std::vector<uint32_t>& idx, int x, int y, int z, int dir, BlockType type)
@@ -251,11 +253,11 @@
         verts.reserve(WorldSettings::CHUNK_SIZE * 24);
         idx.reserve(WorldSettings::CHUNK_SIZE * 36);
 
-        for (int x = 0; x < WIDTH; x++)
+        for (int x = 0; x < WorldSettings::CHUNK_WIDTH; x++)
         {
-            for (int z = 0; z < DEPTH; z++)
+            for (int z = 0; z < WorldSettings::CHUNK_DEPTH; z++)
             {
-                for (int y = 0; y < HEIGHT; y++)
+                for (int y = 0; y < WorldSettings::CHUNK_HEIGHT; y++)
                 {
                     if (getBlock(x, y, z) == BlockType::Air) continue;
 
@@ -285,7 +287,7 @@
                             int nChunkX = chunkX + chunkOffsetX;
                             int nChunkZ = chunkZ + chunkOffsetZ;
 
-                            if (world.getChunk(nChunkX, nChunkZ, tx, y, tz) == BlockType::Air) {
+                            if (world.getChunk(nChunkX, nChunkZ, tx, ty, tz) == BlockType::Air) {
                                 addFaceQuad(verts, idx, x, y, z, d, type);
                             }
                         }
@@ -327,7 +329,7 @@
  
     // just draws the mesh (one glDrawElements call under the hood)
     void Chunk::draw(Shader& shader, GLuint& atlasText) {
-        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(chunkX * WIDTH, 0.0f, chunkZ * DEPTH));
+        glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(chunkX * WorldSettings::CHUNK_WIDTH, 0.0f, chunkZ * WorldSettings::CHUNK_DEPTH));
         shader.setMat4("model", model);
         mesh.draw(shader, atlasText);
     }
@@ -372,5 +374,5 @@
 
     // simple 1D indexing into a 3D array
     inline int Chunk::index(int x, int y, int z) const {
-      return x + WIDTH * (y + HEIGHT * z);
+      return x + WorldSettings::CHUNK_WIDTH * (y + WorldSettings::CHUNK_HEIGHT * z);
     }

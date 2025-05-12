@@ -5,7 +5,7 @@
 #include "shader_m.h"
 #include "VoxelTypes.hpp"
 #include "Mesh.hpp"   
-#include "Noise.h"
+#include "WorldConfig.hpp"
 
 
 class World;
@@ -18,16 +18,11 @@ class Chunk
     int chunkX;
     int chunkZ;
 
-    static constexpr int WIDTH  = 16;
-    static constexpr int HEIGHT = 256;
-    static constexpr int DEPTH  = 16;
-
-    static constexpr int MAX_SURFACE = 64;
-
     std::atomic<bool> dirty;
     std::atomic<bool> scheduled;
+    std::atomic<bool> hasBeenGenerated;
 
-    std::array<BlockType, WIDTH*HEIGHT*DEPTH> blocks;
+    std::array<BlockType, WorldSettings::CHUNK_WIDTH*WorldSettings::CHUNK_HEIGHT*WorldSettings::CHUNK_DEPTH> blocks;
 
     void generate();
     void buildMesh();
@@ -48,10 +43,7 @@ class Chunk
     std::vector<Vertex> verts;
     std::vector<uint32_t> idx;
 
-    const siv::PerlinNoise::seed_type seed = 123456u;
-
     AABB box;          
     Mesh mesh;
-    Noise noise{ seed };
     World& world;
 };

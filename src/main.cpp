@@ -163,9 +163,9 @@ int main()
         GLuint primitives;
         glGetQueryObjectuiv(query, GL_QUERY_RESULT, &primitives);
 
-        static size_t frameCounter=0, indexSum=0;
-        frameCounter++;
-        indexSum += primitives;
+        // static size_t frameCounter=0, indexSum=0;
+        // frameCounter++;
+        // indexSum += primitives;
 
         // if (frameCounter == 60) {
         //   std::cout << "Avg indices/frame: " << (indexSum/60) << "\n";

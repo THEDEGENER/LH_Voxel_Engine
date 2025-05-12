@@ -34,8 +34,8 @@ BlockType World::getChunk(int nChunkX, int nChunkZ, int tx, int ty, int tz)
   auto key = std::make_pair(nChunkX, nChunkZ);
 
   if (chunks.contains(key)) {
+    if (chunks.at(key)->hasBeenGenerated == false) return BlockType::Air;
     BlockType block_t = chunks.at(key)->getBlock(nx, ty, nz);
-    std::cout << "returning a block type of: " << static_cast<int>(block_t) << std::endl;
     return block_t;
   }
   return BlockType::Air;
@@ -45,11 +45,11 @@ void World::updateVisibleChunks()
 {
   visibleChunks.clear();
   // figure out which chunk the player is in
-  int playerChunkX = int(floor(playerPos.x / Chunk::WIDTH));
-  int playerChunkZ = int(floor(playerPos.z / Chunk::DEPTH));
+  int playerChunkX = int(floor(playerPos.x / WorldSettings::CHUNK_WIDTH));
+  int playerChunkZ = int(floor(playerPos.z / WorldSettings::CHUNK_DEPTH));
 
   // loop a 3×3 (or NxN) area around that chunk
-  static constexpr int R = 3;
+  static constexpr int R = 10;
   for (int dz = -R; dz <= R; ++dz) {
     for (int dx = -R; dx <= R; ++dx) {
       int cx = playerChunkX + dx;
@@ -110,10 +110,10 @@ void World::updatePlayerPos(const glm::vec3& newPos, const std::vector<glm::vec4
     frustumPlanes = newFrustumPlanes;
     frustumDirty = true;
   }
-  int oldChunkX = int(floor(oldPos.x / Chunk::WIDTH));
-  int oldChunkZ = int(floor(oldPos.z / Chunk::DEPTH));
-  int newChunkX = int(floor(playerPos.x / Chunk::WIDTH));
-  int newChunkZ = int(floor(playerPos.z / Chunk::DEPTH));
+  int oldChunkX = int(floor(oldPos.x / WorldSettings::CHUNK_WIDTH));
+  int oldChunkZ = int(floor(oldPos.z / WorldSettings::CHUNK_DEPTH));
+  int newChunkX = int(floor(playerPos.x / WorldSettings::CHUNK_WIDTH));
+  int newChunkZ = int(floor(playerPos.z / WorldSettings::CHUNK_DEPTH));
   bool moved = (oldChunkX != newChunkX || oldChunkZ != newChunkZ);
   if(moved || frustumDirty)
   {
