@@ -14,7 +14,7 @@ using namespace std;
 class Chunk;
 
 // type is explicitly set the 8bit int taking less space for 1000s of blocks
-enum class BlockType : uint8_t { Air, Dirt, Grass, Stone };
+enum class BlockType : uint8_t { NoBlock, Air, Dirt, Grass, Stone };
 
 struct Block {
     BlockType b_type;

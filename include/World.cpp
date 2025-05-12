@@ -14,6 +14,7 @@ World::World()
 {
   atlasText = Loader::loadTexture("assets/textures/block_atlas.png");
   startWorldThreads();
+  init_noise();
 }
 
 World::~World()
@@ -33,12 +34,11 @@ BlockType World::getChunk(int nChunkX, int nChunkZ, int tx, int ty, int tz)
 
   auto key = std::make_pair(nChunkX, nChunkZ);
 
-  if (chunks.contains(key)) {
-    if (chunks.at(key)->hasBeenGenerated == false) return BlockType::Air;
-    BlockType block_t = chunks.at(key)->getBlock(nx, ty, nz);
-    return block_t;
+  auto it = chunks.find(key);
+  if (it == chunks.end() || it->second->hasBeenGenerated == false) {
+    return BlockType::NoBlock;
   }
-  return BlockType::Air;
+  return it->second->getBlock(nx, ty, nz);
 }
 
 void World::updateVisibleChunks()
@@ -59,8 +59,9 @@ void World::updateVisibleChunks()
       // if we haven’t generated that chunk yet, do so and store it
       auto it = chunks.find(key);
       if (it == chunks.end()) {
-        auto newChunk = std::make_unique<Chunk>(cx, cz, *this);
+        auto newChunk = std::make_unique<Chunk>(cx, cz, *this, noise);
         Chunk* rawChunkPtr = newChunk.get();
+        rawChunkPtr->hasBeenGenerated = true;
         it = chunks.emplace(key, std::move(newChunk)).first;
         // upload new chunk to the queue for a thread to take
         generateQueue.push(ChunkJob{ rawChunkPtr, JobType::GenerateAndBuild });
@@ -160,5 +161,19 @@ void World::manageChunks(const glm::vec3& newPos, Shader& shader, const std::vec
   updatePlayerPos(newPos, frustumPlanes);
   uploadFinishedChunksToGPU();
   drawVisibleChunks(shader);
+}
+
+void World::init_noise() {
+  noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2S);
+  
+  noise.SetSeed(WorldSettings::seed);
+  noise.SetFractalType(FastNoiseLite::FractalType_FBm);
+  noise.SetFrequency(0.01);
+  noise.SetFractalOctaves(9);
+  noise.SetFractalLacunarity(1.5);
+  noise.SetFractalGain(0.02);
+  noise.SetFrequency(0.007);
+  noise.SetDomainWarpType(FastNoiseLite::DomainWarpType_OpenSimplex2);
+  noise.SetDomainWarpAmp(50.0);
 }
 

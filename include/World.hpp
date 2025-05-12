@@ -9,6 +9,7 @@
 #include "SafeQueue.hpp"        // for SafeQueue<ChunkJob>
 #include "shader_m.h"           // for Shader
 #include "Chunk.hpp"
+#include "FastNoiseLite.h"
 
 class Chunk;
 
@@ -32,6 +33,7 @@ class World
 
     // Worker threads:
     void startWorldThreads();
+    void init_noise();
     void workerThreadPool();
 
     // Utility:
@@ -49,4 +51,6 @@ class World
     std::vector<std::thread> threads;
 
     GLuint atlasText;
+
+    FastNoiseLite noise;
 };

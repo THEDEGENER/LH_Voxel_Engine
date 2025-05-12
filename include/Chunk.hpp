@@ -6,6 +6,7 @@
 #include "VoxelTypes.hpp"
 #include "Mesh.hpp"   
 #include "WorldConfig.hpp"
+#include "FastNoiseLite.h"
 
 
 class World;
@@ -13,7 +14,7 @@ class World;
 class Chunk
 {
     public:
-    Chunk(int chunkX, int chunkZ, World& world);
+    Chunk(int chunkX, int chunkZ, World& world, FastNoiseLite& noiseptr);
 
     int chunkX;
     int chunkZ;
@@ -46,4 +47,5 @@ class Chunk
     AABB box;          
     Mesh mesh;
     World& world;
+    FastNoiseLite& noise;
 };

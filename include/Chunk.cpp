@@ -6,14 +6,16 @@
 #include "VoxelTypes.hpp" 
 #include "World.hpp"  
 #include "WorldConfig.hpp"
+#include "FastNoiseLite.h"
+
  
 
-    Chunk::Chunk(int chunkX, int chunkZ, World& worldptr) : chunkX(chunkX), chunkZ(chunkZ), dirty(true), scheduled(false), hasBeenGenerated(false),
+    Chunk::Chunk(int chunkX, int chunkZ, World& worldptr, FastNoiseLite& noiseptr) : chunkX(chunkX), chunkZ(chunkZ), dirty(true), scheduled(false), hasBeenGenerated(false),
         box{
             glm::vec3(chunkX * float(WorldSettings::CHUNK_WIDTH), 0.0f, chunkZ * float(WorldSettings::CHUNK_DEPTH)), 
             glm::vec3(chunkX * float(WorldSettings::CHUNK_WIDTH) + float(WorldSettings::CHUNK_WIDTH), 
             float(WorldSettings::CHUNK_HEIGHT), chunkZ * float(WorldSettings::CHUNK_DEPTH) + float(WorldSettings::CHUNK_DEPTH))
-        }, world(worldptr)
+        }, world(worldptr), noise(noiseptr)
     {
       // initialize everything to Air
       blocks.fill(BlockType::Air);
@@ -37,10 +39,14 @@
             {
                 int worldX = chunkX * WorldSettings::CHUNK_WIDTH + x;
                 int worldZ = chunkZ * WorldSettings::CHUNK_DEPTH + z;
+                float xW = noise.GetNoise((float)worldX, (float)worldZ) * 10;
+                float zW = noise.GetNoise((float)worldZ, (float)worldX) * 10;
 
                 // double height = noise.getWorldNoise(worldX, worldZ);
                 // int surfaceY = static_cast<int>( height * WorldSettings::MAX_SURFACE);
-                int surfaceY = 200;
+                float height = abs(noise.GetNoise((float)xW, (float)zW)) * WorldSettings::CHUNK_HEIGHT;
+                float clampedH = std::min(height, 200.0f);
+                int surfaceY = static_cast<int>(clampedH);
                 for (int y = 0; y < WorldSettings::CHUNK_HEIGHT; y++)
                 {
                     if (y == surfaceY)
@@ -56,7 +62,6 @@
                 }
             }
         }
-        hasBeenGenerated = true;
     }
 
     void Chunk::addFaceQuad(std::vector<Vertex>& verts, std::vector<uint32_t>& idx, int x, int y, int z, int dir, BlockType type)
@@ -271,6 +276,7 @@
                         int ty = y + offsets.y;
                         int tz = z + offsets.z;
 
+
                         int chunkOffsetX = 0;
                         if (tx <  0) chunkOffsetX = -1;
                         if (tx >= WorldSettings::CHUNK_WIDTH) chunkOffsetX = +1;
@@ -287,7 +293,8 @@
                             int nChunkX = chunkX + chunkOffsetX;
                             int nChunkZ = chunkZ + chunkOffsetZ;
 
-                            if (world.getChunk(nChunkX, nChunkZ, tx, ty, tz) == BlockType::Air) {
+                            BlockType block_t = world.getChunk(nChunkX, nChunkZ, tx, y, tz);
+                            if (block_t == BlockType::Air) {
                                 addFaceQuad(verts, idx, x, y, z, d, type);
                             }
                         }

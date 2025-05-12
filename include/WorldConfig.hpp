@@ -5,7 +5,7 @@
 #include <iostream>
 
 struct WorldSettings {
-    int seed = 238947;
+    static constexpr int seed = 238947;
     float atlasWidth = 1024.0f;
     float atlasHeight = 512.0f;
     float tileSizePx = 16.0f;
