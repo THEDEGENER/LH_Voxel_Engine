@@ -49,19 +49,9 @@
                 int surfaceY = static_cast<int>(clampedH);
                 for (int y = 0; y < WorldSettings::CHUNK_HEIGHT; y++)
                 {
-                    //if (y == surfaceY)
-                    //{
-                    //    setBlock(x, y, z, BlockType::Grass);
-                    //} else if (y < surfaceY && y > surfaceY - 5)
-                    //{
-                    //    setBlock(x, y, z, BlockType::Dirt);
-                    //} else if (y < surfaceY - 5)
-                    //{
-                    //    setBlock(x, y, z, BlockType::Stone);
-                    //}
-                    if (y <= surfaceY) {
-                        setBlock(x, y, z, BlockType::Grass);
-                    }
+                    if (y == surfaceY) setBlock(x, y, z, BlockType::Grass);
+                    else if (y < surfaceY && y >= surfaceY - 12) setBlock(x, y, z, BlockType::Dirt);
+                    else if (y < surfaceY - 12) setBlock(x, y, z, BlockType::Stone);
                 }
             }
         }
