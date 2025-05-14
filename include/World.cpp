@@ -8,9 +8,13 @@
 #include "VoxelTypes.hpp"
 #include "scripts/Loader.h"
 #include "WorldConfig.hpp"
+#include "libs/glad/glad.h"
+#include "libs/glfw/glfw3.h"
+#include <libs/glm/glm.hpp>
+#include <libs/glm/gtc/matrix_transform.hpp>
+#include <libs/glm/gtc/type_ptr.hpp>
 
-
-World::World() 
+World::World()
 {
   atlasText = Loader::loadTexture("assets/textures/block_atlas.png");
   startWorldThreads();
@@ -21,7 +25,7 @@ World::~World()
 {
   generateQueue.close();
   uploadQueue.close();
-  for(auto& t : threads)
+  for (auto &t : threads)
   {
     t.join();
   }
@@ -35,7 +39,8 @@ BlockType World::getChunk(int nChunkX, int nChunkZ, int tx, int ty, int tz)
   auto key = std::make_pair(nChunkX, nChunkZ);
 
   auto it = chunks.find(key);
-  if (it == chunks.end() || it->second->hasBeenGenerated == false) {
+  if (it == chunks.end() || it->second->hasBeenGenerated == false)
+  {
     return BlockType::NoBlock;
   }
   return it->second->getBlock(nx, ty, nz);
@@ -50,32 +55,37 @@ void World::updateVisibleChunks()
 
   // loop a 3×3 (or NxN) area around that chunk
   static constexpr int R = 10;
-  for (int dz = -R; dz <= R; ++dz) {
-    for (int dx = -R; dx <= R; ++dx) {
+  for (int dz = -R; dz <= R; ++dz)
+  {
+    for (int dx = -R; dx <= R; ++dx)
+    {
       int cx = playerChunkX + dx;
       int cz = playerChunkZ + dz;
       auto key = std::make_pair(cx, cz);
 
       // if we haven’t generated that chunk yet, do so and store it
       auto it = chunks.find(key);
-      if (it == chunks.end()) {
+      if (it == chunks.end())
+      {
         auto newChunk = std::make_unique<Chunk>(cx, cz, *this, noise);
-        Chunk* rawChunkPtr = newChunk.get();
+        Chunk *rawChunkPtr = newChunk.get();
         rawChunkPtr->hasBeenGenerated = true;
         it = chunks.emplace(key, std::move(newChunk)).first;
         // upload new chunk to the queue for a thread to take
-        generateQueue.push(ChunkJob{ rawChunkPtr, JobType::GenerateAndBuild });
+        generateQueue.push(ChunkJob{rawChunkPtr, JobType::GenerateAndBuild});
         rawChunkPtr->scheduled = true;
-      } else {
-        Chunk* exisitngChunk = it->second.get();
+      }
+      else
+      {
+        Chunk *exisitngChunk = it->second.get();
         if (exisitngChunk->dirty.load(std::memory_order_relaxed) && !exisitngChunk->scheduled.load(std::memory_order_relaxed))
         {
-          generateQueue.push(ChunkJob{ exisitngChunk, JobType::BuildOnly });
+          generateQueue.push(ChunkJob{exisitngChunk, JobType::BuildOnly});
           exisitngChunk->scheduled = true;
         }
       }
-      
-      Chunk* chunkPtr = it->second.get();
+
+      Chunk *chunkPtr = it->second.get();
       if (chunkPtr->IsAabbVisible(frustumPlanes))
       {
         // grab the raw pointer and add it to our render list
@@ -87,22 +97,22 @@ void World::updateVisibleChunks()
 
 void World::uploadFinishedChunksToGPU()
 {
-  Chunk* finishedChunk = nullptr;
-  while(uploadQueue.tryPop(finishedChunk))
+  Chunk *finishedChunk = nullptr;
+  while (uploadQueue.tryPop(finishedChunk))
   {
     finishedChunk->setData();
   }
 }
 
-void World::drawVisibleChunks(Shader& shader)
+void World::drawVisibleChunks(Shader &shader)
 {
-  for (auto& chunk : visibleChunks) 
+  for (auto &chunk : visibleChunks)
   {
     chunk->draw(shader, atlasText);
   }
 }
 
-void World::updatePlayerPos(const glm::vec3& newPos, const std::vector<glm::vec4>& newFrustumPlanes)
+void World::updatePlayerPos(const glm::vec3 &newPos, const std::vector<glm::vec4> &newFrustumPlanes)
 {
   oldPos = playerPos;
   this->playerPos = newPos;
@@ -116,7 +126,7 @@ void World::updatePlayerPos(const glm::vec3& newPos, const std::vector<glm::vec4
   int newChunkX = int(floor(playerPos.x / WorldSettings::CHUNK_WIDTH));
   int newChunkZ = int(floor(playerPos.z / WorldSettings::CHUNK_DEPTH));
   bool moved = (oldChunkX != newChunkX || oldChunkZ != newChunkZ);
-  if(moved || frustumDirty)
+  if (moved || frustumDirty)
   {
     updateVisibleChunks();
     frustumDirty = false;
@@ -125,14 +135,14 @@ void World::updatePlayerPos(const glm::vec3& newPos, const std::vector<glm::vec4
 
 void World::workerThreadPool()
 {
-  while(true)
+  while (true)
   {
     ChunkJob job = generateQueue.pop();
     if (job.chunk == nullptr)
     {
       break;
     }
-    Chunk* c = job.chunk;
+    Chunk *c = job.chunk;
     c->dirty = false;
     if (job.type == JobType::GenerateAndBuild)
     {
@@ -156,16 +166,41 @@ void World::startWorldThreads()
   }
 }
 
-void World::manageChunks(const glm::vec3& newPos, Shader& shader, const std::vector<glm::vec4>& frustumPlanes)
+void World::manageChunks(const glm::vec3 &newPos)
 {
   updatePlayerPos(newPos, frustumPlanes);
   uploadFinishedChunksToGPU();
-  drawVisibleChunks(shader);
+  drawVisibleChunks(blockShader);
 }
 
-void World::init_noise() {
+void World::updateCamera()
+{
+  glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)WorldSettings::SCR_WIDTH / (float)WorldSettings::SCR_HEIGHT, 0.1f, 300.0f);
+  glm::mat4 view = camera.GetViewMatrix();
+
+  const glm::mat4 viewProjection = projection * view;
+
+  const glm::mat4 viewProjectionTransposed = glm::transpose(viewProjection);
+
+  frustumPlanes = {
+      // left, right, bottom, top
+      (viewProjectionTransposed[3] + viewProjectionTransposed[0]),
+      (viewProjectionTransposed[3] - viewProjectionTransposed[0]),
+      (viewProjectionTransposed[3] + viewProjectionTransposed[1]),
+      (viewProjectionTransposed[3] - viewProjectionTransposed[1]),
+
+      // near, far
+      (viewProjectionTransposed[3] + viewProjectionTransposed[2]),
+      (viewProjectionTransposed[3] - viewProjectionTransposed[2]),
+  };
+
+  blockShader.setMat4("projection", projection);
+  blockShader.setMat4("view", view);
+}
+
+void World::init_noise()
+{
   noise.SetNoiseType(FastNoiseLite::NoiseType_OpenSimplex2S);
-  
   noise.SetSeed(WorldSettings::seed);
   noise.SetFractalType(FastNoiseLite::FractalType_FBm);
   noise.SetFrequency(0.01);
@@ -176,4 +211,3 @@ void World::init_noise() {
   noise.SetDomainWarpType(FastNoiseLite::DomainWarpType_OpenSimplex2);
   noise.SetDomainWarpAmp(50.0);
 }
-

@@ -4,13 +4,15 @@
 
 #include <iostream>
 
-struct WorldSettings {
+struct WorldSettings
+{
     static constexpr int seed = 238947;
     float atlasWidth = 1024.0f;
     float atlasHeight = 512.0f;
     float tileSizePx = 16.0f;
 
-    static WorldSettings& instance() {
+    static WorldSettings &instance()
+    {
         static WorldSettings instance;
         return instance;
     }
@@ -20,6 +22,8 @@ struct WorldSettings {
     static constexpr int CHUNK_DEPTH = 16;
     static constexpr int CHUNK_SIZE = CHUNK_WIDTH * CHUNK_HEIGHT * CHUNK_DEPTH;
     static constexpr int MAX_SURFACE = 34;
+    static constexpr int SCR_WIDTH = 1200;
+    static constexpr int SCR_HEIGHT = 800;
 };
 
 #define CONFIG WorldSettings::instance()
