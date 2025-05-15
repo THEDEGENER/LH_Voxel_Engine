@@ -87,6 +87,7 @@ void World::updateVisibleChunks()
 
       Chunk *chunkPtr = it->second.get();
       if (chunkPtr->IsAabbVisible(frustumPlanes))
+      // if (true)
       {
         // grab the raw pointer and add it to our render list
         visibleChunks.push_back(chunkPtr);
@@ -106,6 +107,7 @@ void World::uploadFinishedChunksToGPU()
 
 void World::drawVisibleChunks(Shader &shader)
 {
+  std::cout << visibleChunks.size() << std::endl;
   for (auto &chunk : visibleChunks)
   {
     chunk->draw(shader, atlasText);
@@ -166,36 +168,11 @@ void World::startWorldThreads()
   }
 }
 
-void World::manageChunks(const glm::vec3 &newPos)
+void World::manageChunks(const glm::vec3 &newPos, Shader &shader, const std::vector<glm::vec4> &frustumPlanes)
 {
   updatePlayerPos(newPos, frustumPlanes);
   uploadFinishedChunksToGPU();
-  drawVisibleChunks(blockShader);
-}
-
-void World::updateCamera()
-{
-  glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)WorldSettings::SCR_WIDTH / (float)WorldSettings::SCR_HEIGHT, 0.1f, 300.0f);
-  glm::mat4 view = camera.GetViewMatrix();
-
-  const glm::mat4 viewProjection = projection * view;
-
-  const glm::mat4 viewProjectionTransposed = glm::transpose(viewProjection);
-
-  frustumPlanes = {
-      // left, right, bottom, top
-      (viewProjectionTransposed[3] + viewProjectionTransposed[0]),
-      (viewProjectionTransposed[3] - viewProjectionTransposed[0]),
-      (viewProjectionTransposed[3] + viewProjectionTransposed[1]),
-      (viewProjectionTransposed[3] - viewProjectionTransposed[1]),
-
-      // near, far
-      (viewProjectionTransposed[3] + viewProjectionTransposed[2]),
-      (viewProjectionTransposed[3] - viewProjectionTransposed[2]),
-  };
-
-  blockShader.setMat4("projection", projection);
-  blockShader.setMat4("view", view);
+  drawVisibleChunks(shader);
 }
 
 void World::init_noise()

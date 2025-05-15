@@ -45,7 +45,7 @@ void Mesh::setData(std::vector<Vertex> &verts,
 void Mesh::draw(Shader &shader, GLuint &atlasText)
 {
     glBindTexture(GL_TEXTURE_2D, atlasText);
-    // glActiveTexture(GL_TEXTURE0); - i believe this defaults to 0?
+    glActiveTexture(GL_TEXTURE0);
     shader.use();
     // shader.setInt("atlasTex", 0);
     glBindVertexArray(VAO);

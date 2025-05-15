@@ -22,7 +22,6 @@ public:
     ~World();
 
     void manageChunks(const glm::vec3 &newPos, Shader &shader, const std::vector<glm::vec4> &frustumPlanes);
-    void updateCamera();
     BlockType getChunk(int nChunkX, int nChunkZ, int tx, int ty, int tz);
 
 private:
@@ -54,7 +53,4 @@ private:
     GLuint atlasText;
 
     FastNoiseLite noise;
-    Shader blockShader{Loader::getPath("shaders/block.vs"),
-                       Loader::getPath("shaders/block.fs")};
-    Camera camera{glm::vec3(80.0f, 67.0f, 80.0f)};
 };

@@ -83,6 +83,9 @@ int main()
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 
+    Shader blockShader(Loader::getPath("shaders/block.vs"),
+                       Loader::getPath("shaders/block.fs"));
+
     World world;
 
     GLuint query;
@@ -112,12 +115,33 @@ int main()
         processInput(window);
         // glDisable(GL_CULL_FACE);
 
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)WorldSettings::SCR_WIDTH / (float)WorldSettings::SCR_HEIGHT, 0.1f, 300.0f);
+        glm::mat4 view = camera.GetViewMatrix();
+
+        const glm::mat4 viewProjection = projection * view;
+
+        const glm::mat4 viewProjectionTransposed = glm::transpose(viewProjection);
+
+        const std::vector<glm::vec4> frustumPlanes = {
+            // left, right, bottom, top
+            (viewProjectionTransposed[3] + viewProjectionTransposed[0]),
+            (viewProjectionTransposed[3] - viewProjectionTransposed[0]),
+            (viewProjectionTransposed[3] + viewProjectionTransposed[1]),
+            (viewProjectionTransposed[3] - viewProjectionTransposed[1]),
+
+            // near, far
+            (viewProjectionTransposed[3] + viewProjectionTransposed[2]),
+            (viewProjectionTransposed[3] - viewProjectionTransposed[2]),
+        };
+
+        blockShader.setMat4("projection", projection);
+        blockShader.setMat4("view", view);
         // render
         // ------
         glClearColor(0.47f, 0.75f, 0.88f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        world.manageChunks(camera.Position);
+        world.manageChunks(camera.Position, blockShader, frustumPlanes);
         // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         glEndQuery(GL_PRIMITIVES_GENERATED);
 
